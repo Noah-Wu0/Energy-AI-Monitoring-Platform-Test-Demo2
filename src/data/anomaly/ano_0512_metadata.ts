@@ -21,14 +21,20 @@ const DATA = {
   "kpis": {
     "deviation_duration_h": 144,
     "max_deviation_pct": 40.4,
+    "max_deviation_ci": "95% CI: 36.1-44.7%",
     "morphology_similarity_score": 0.87,
+    "morphology_ci": "95% CI: 0.82-0.92",
     "ai_confidence": 0.87,
+    "ai_confidence_ci": "LLM-TS-Foundation-V2.3 · 30-day backtest accuracy 91.2%",
     "anomaly_points": 156,
-    "similar_historical_cases": 3
+    "similar_historical_cases": 3,
+    "predicted_next_breach_h": 48,
+    "action_window_h": 36,
+    "predicted_cumulative_loss_mmcm": 75
   },
   "ai_explanation": {
-    "headline": "Night-time gas throughput exceeds learned baseline by +38% over 6 working days.",
-    "detail": "The LLM time-series model has learned this facility's normal operational fingerprint over 12 months of telemetry. Over the past 6 working days, night-time throughput (22:00–06:00) consistently exceeded the P90 prediction band by +38% on average. Pattern morphology matches historical case ANO-2025-0317 (similarity 0.87).",
+    "headline": "Prediction: 92% probability of pipeline throughput breach within 48H. Investigation must begin within 36H.",
+    "detail": "The LLM time-series foundation model has learned the facility's normal operating patterns over the past 12 months. Over the last 6 working days, night-time throughput (22:00-06:00) has consistently exceeded the P90 prediction band, with an average deviation of +38%. The pattern morphology matches historical case ANO-2025-0317 (similarity 0.87, 95% CI: 0.82-0.92). If unaddressed, cumulative unreported throughput will exceed the 75 MMcm threshold within 30 days, triggering regulatory escalation.",
     "pattern_match": {
       "case_id": "ANO-2025-0317",
       "case_title": "Western Caspian — Unreported night production (2025-09)",

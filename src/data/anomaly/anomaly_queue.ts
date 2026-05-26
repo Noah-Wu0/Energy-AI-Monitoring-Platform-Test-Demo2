@@ -5,21 +5,27 @@ const DATA = [
     "facility_name": "Aktau Main Compressor Station",
     "severity": "CRITICAL",
     "detected_at": "2026-05-28T14:32:00Z",
-    "headline": "Night-time gas throughput exceeds learned baseline by +38% over 6 working days.",
+    "headline": "Prediction: 92% probability of pipeline throughput breach within 48H",
     "max_deviation_pct": 40.4,
+    "max_deviation_ci": "95% CI: 36.1-44.7%",
     "ai_confidence": 0.87,
-    "metric_name": "GAS_THROUGHPUT"
+    "ai_confidence_ci": "Backtest accuracy 91.2%",
+    "metric_name": "GAS_THROUGHPUT",
+    "action_window_h": 36
   },
   {
     "id": "ANO-2026-0489",
     "facility_id": "FAC-KZ-KAR-SMR-014",
-    "facility_name": "Karaganda Black-Metals Smelter",
+    "facility_name": "Karaganda Metallurgical Plant",
     "severity": "WARNING",
     "detected_at": "2026-05-26T10:48:00Z",
-    "headline": "Night-time consumption +24.5% vs baseline; possible covert production.",
+    "headline": "Night-time power +24.5% deviation from baseline, pattern matches suspicious production behavior",
     "max_deviation_pct": 24.5,
+    "max_deviation_ci": "95% CI: 21.0-28.0%",
     "ai_confidence": 0.79,
-    "metric_name": "ELECTRICITY"
+    "ai_confidence_ci": "Backtest accuracy 85.3%",
+    "metric_name": "ELECTRICITY",
+    "action_window_h": 72
   },
   {
     "id": "ANO-2026-0501",
@@ -28,9 +34,12 @@ const DATA = [
     "severity": "WARNING",
     "metric_name": "PRESSURE",
     "detected_at": "2026-05-28T12:15:00Z",
-    "headline": "Suction pressure drift exceeds 2σ baseline",
+    "headline": "Suction pressure drift beyond 2σ baseline, monitor for equipment aging risk",
     "max_deviation_pct": 11.4,
-    "ai_confidence": 0.71
+    "max_deviation_ci": "95% CI: 9.8-13.0%",
+    "ai_confidence": 0.71,
+    "ai_confidence_ci": "Backtest accuracy 78.6%",
+    "action_window_h": 96
   },
   {
     "id": "ANO-2026-0498",
@@ -39,20 +48,26 @@ const DATA = [
     "severity": "WARNING",
     "metric_name": "FLOW_RATE",
     "detected_at": "2026-05-28T08:22:00Z",
-    "headline": "Output flow degradation -8% over 24h window",
+    "headline": "Output flow rate declining -8.2% over 24H, may impact regional water supply",
     "max_deviation_pct": 8.2,
-    "ai_confidence": 0.68
+    "max_deviation_ci": "95% CI: 6.5-9.9%",
+    "ai_confidence": 0.68,
+    "ai_confidence_ci": "Backtest accuracy 74.1%",
+    "action_window_h": 120
   },
   {
     "id": "ANO-2026-0476",
     "facility_id": "FAC-KZ-AKT-OWF-006",
-    "facility_name": "Zhetybai Mature Field",
+    "facility_name": "Zhetybai Mature Oil Field",
     "severity": "WARNING",
     "metric_name": "OIL_OUTPUT",
     "detected_at": "2026-05-28T07:14:00Z",
-    "headline": "Output decline -12% above natural depletion rate",
+    "headline": "Production decline -12.3% exceeds natural depletion rate, inspect equipment status",
     "max_deviation_pct": 12.3,
-    "ai_confidence": 0.66
+    "max_deviation_ci": "95% CI: 10.1-14.5%",
+    "ai_confidence": 0.66,
+    "ai_confidence_ci": "Backtest accuracy 71.8%",
+    "action_window_h": 144
   },
   {
     "id": "ANO-2026-0445",
@@ -61,9 +76,12 @@ const DATA = [
     "severity": "WARNING",
     "metric_name": "STEAM_PRESSURE",
     "detected_at": "2026-05-27T22:01:00Z",
-    "headline": "Steam pressure morphology shift detected",
+    "headline": "Steam pressure waveform drift detected, may indicate accelerated equipment wear",
     "max_deviation_pct": 6.8,
-    "ai_confidence": 0.62
+    "max_deviation_ci": "95% CI: 5.2-8.4%",
+    "ai_confidence": 0.62,
+    "ai_confidence_ci": "Backtest accuracy 68.5%",
+    "action_window_h": 168
   }
 ];
 export default DATA;

@@ -273,27 +273,27 @@ export default function PipelineTimeSeries() {
         </div>
       </div>
 
-      {/* KPI Strip */}
+      {/* KPI Strip — Prediction-Focused */}
       <div className="grid grid-cols-4 gap-px bg-border-default border-b border-border-default shrink-0">
-        <KpiCard 
-          label="Deviation Duration" 
-          value={`${metadata.kpis.deviation_duration_h} H`} 
-          subLabel="6 WORKING DAYS" 
+        <KpiCard
+          label="Predicted Breach Window"
+          value={`${metadata.kpis.predicted_next_breach_h} H`}
+          subLabel={`Investigation must start within ${metadata.kpis.action_window_h}H`}
         />
-        <KpiCard 
-          label="Max Deviation" 
+        <KpiCard
+          label="Max Deviation"
           value={<span className="text-status-critical">+{metadata.kpis.max_deviation_pct}%</span>}
-          subLabel="ABOVE LLM P90 BAND" 
+          subLabel={metadata.kpis.max_deviation_ci}
         />
-        <KpiCard 
-          label="Morphology Similarity" 
-          value={metadata.kpis.morphology_similarity_score.toFixed(2)} 
-          subLabel={`MATCH ${metadata.ai_explanation.pattern_match.case_id}`} 
+        <KpiCard
+          label="Pattern Match Score"
+          value={metadata.kpis.morphology_similarity_score.toFixed(2)}
+          subLabel={metadata.kpis.morphology_ci}
         />
-        <KpiCard 
-          label="AI Confidence" 
-          value={metadata.kpis.ai_confidence.toFixed(2)} 
-          subLabel="HIGH CONFIDENCE" 
+        <KpiCard
+          label="AI Confidence"
+          value={metadata.kpis.ai_confidence.toFixed(2)}
+          subLabel={metadata.kpis.ai_confidence_ci}
         />
       </div>
 
@@ -331,13 +331,14 @@ export default function PipelineTimeSeries() {
                     {item.severity}
                   </span>
                 </div>
-                <div className="text-[11px] font-bold truncate mb-1">{item.facility_name}</div>
+                <div className="text-[11px] font-bold truncate mb-1">{item.headline || item.facility_name}</div>
                 <div className={cn("text-[10px] mb-1 opacity-80", activeAnomaly === item.id ? "text-white/80" : "text-text-secondary")}>
                   {item.metric_name} · <span className={activeAnomaly === item.id ? "text-white" : (item.max_deviation_pct > 30 ? "text-status-critical font-bold" : "text-text-primary")}>+{item.max_deviation_pct}%</span>
+                  {item.max_deviation_ci && <span className="text-[8px] ml-1 opacity-60">({item.max_deviation_ci})</span>}
                 </div>
                 <div className={cn("text-[9px] flex items-center justify-between mt-auto opacity-60", activeAnomaly === item.id ? "text-white/60" : "text-text-tertiary")}>
-                  <span>Detected {new Date(item.detected_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span>Conf {item.ai_confidence.toFixed(2)}</span>
+                  <span>Action window {item.action_window_h || '--'}H</span>
+                  <span>{(item.ai_confidence * 100).toFixed(0)}% {(item as any).ai_confidence_ci ? '· ' + (item as any).ai_confidence_ci : ''}</span>
                 </div>
               </button>
             ))}
@@ -493,23 +494,26 @@ export default function PipelineTimeSeries() {
         {/* Right Column: AI Explainer & Similar Cases */}
         <div className="w-[360px] border-l border-border-default bg-white flex flex-col overflow-hidden shrink-0">
           <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-            {/* AI Inference Section */}
+            {/* AI Prediction & Attribution */}
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <BrainCircuit size={16} className="text-status-info" />
-                <h3 className="section-title text-[13px] font-bold uppercase tracking-tight mb-0">AI Inference</h3>
+                <h3 className="section-title text-[13px] font-bold uppercase tracking-tight mb-0">AI Prediction & Attribution</h3>
               </div>
-              
+
               <div className="space-y-6">
                 <div>
-                   <div className="all-caps-label text-[10px] text-text-tertiary mb-1">Anomaly Headline</div>
+                   <div className="flex items-center gap-2 mb-1">
+                     <div className="w-1.5 h-1.5 rounded-full bg-status-critical animate-pulse" />
+                     <div className="all-caps-label text-[10px] text-status-critical font-bold">Immediate Attention Required</div>
+                   </div>
                    <p className="text-[13px] font-semibold text-text-primary leading-snug">
                      {metadata.ai_explanation.headline}
                    </p>
                 </div>
 
                 <div className="p-4 bg-bg-secondary/30 border border-border-default rounded-[2px]">
-                   <div className="all-caps-label text-[9px] text-text-tertiary mb-2">Detailed Reasoning</div>
+                   <div className="all-caps-label text-[9px] text-text-tertiary mb-2">Reasoning Basis</div>
                    <p className="text-[11px] leading-relaxed text-text-secondary">
                      {metadata.ai_explanation.detail}
                    </p>
@@ -517,11 +521,11 @@ export default function PipelineTimeSeries() {
               </div>
             </div>
 
-            {/* Historical Similar Case Section */}
+            {/* Historical Case Match */}
             <div className="mb-8 pt-8 border-t border-border-default">
               <div className="flex items-center gap-2 mb-4">
                 <History size={16} className="text-text-tertiary" />
-                <h3 className="section-title text-[13px] font-bold uppercase tracking-tight mb-0">Historical Sim. Case</h3>
+                <h3 className="section-title text-[13px] font-bold uppercase tracking-tight mb-0">Historical Case Match</h3>
               </div>
               
               <div className="border border-border-default p-4">
@@ -558,11 +562,11 @@ export default function PipelineTimeSeries() {
               </div>
             </div>
 
-            {/* Future Risk Forecast Section */}
+            {/* Future Risk Forecast */}
             <div className="pt-8 border-t border-border-default">
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={16} className="text-text-tertiary" />
-                <h3 className="section-title text-[13px] font-bold uppercase tracking-tight mb-0">Future Risk Forecast</h3>
+                <TrendingUp size={16} className="text-status-critical" />
+                <h3 className="section-title text-[13px] font-bold uppercase tracking-tight mb-0 text-status-critical">Future Risk Forecast</h3>
               </div>
               
               <div className="space-y-4">
@@ -591,14 +595,14 @@ export default function PipelineTimeSeries() {
 
           <div className="p-6 border-t border-border-default bg-bg-secondary/30 flex flex-col gap-2 shrink-0">
              <button className="w-full h-11 bg-white border border-border-default text-text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-bg-hover relative overflow-hidden transition-all group">
-                <span className="relative z-10">Dismiss Case</span>
+                <span className="relative z-10">Mark as Acknowledged</span>
              </button>
-             <button 
+             <button
                 onClick={() => navigate(`/attribution/workflow/${metadata.case_id}`)}
-                className="w-full h-11 bg-bg-dark text-white text-[11px] font-bold uppercase tracking-wider hover:bg-bg-dark-2 relative overflow-hidden transition-all group flex items-center justify-center gap-2"
+                className="w-full h-11 bg-[#E14B4B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-red-700 relative overflow-hidden transition-all group flex items-center justify-center gap-2"
              >
                 <GitBranch size={16} />
-                <span>Trigger Attribution ▶</span>
+                <span>Launch Attribution ▶</span>
              </button>
           </div>
         </div>

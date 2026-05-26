@@ -9,7 +9,7 @@ import { CITIES } from '../data/geo';
 import { POWER_PLANTS, SUBSTATIONS, TRANSMISSION_LINES } from '../data/electricity';
 import { OIL_FIELDS, GAS_FIELDS, REFINERIES, PIPELINES } from '../data/oilgas';
 import { COAL_BASINS, COAL_MINES, MINE_MOUTH_PLANTS, URANIUM_MINES, COAL_RAIL } from '../data/coal';
-import { Info, Flame, ChevronRight, AlertTriangle, Layers, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronRight, AlertTriangle, ChevronDown, ChevronUp, ShieldCheck, Clock, FileCheck, FileText, Bell } from 'lucide-react';
 
 // Marker icon factories
 const createDivIcon = (html: string, size: [number, number] = [12, 12]) => L.divIcon({
@@ -46,10 +46,40 @@ const ICONS = {
   URANIUM: createDivIcon('<div class="w-[7px] h-[7px] bg-[#C5E000] clip-hex border border-black/20"></div>', [8, 8]),
 };
 
+function DashboardKpi({ label, value, sub, status }: { label: string; value: string; sub: string; status: 'good' | 'warn' | 'critical' }) {
+  const colors = {
+    good: { dot: '#2FBF71', bg: '#E8F7EF' },
+    warn: { dot: '#E7A53A', bg: '#FCF3E0' },
+    critical: { dot: '#E14B4B', bg: '#FDECEC' },
+  };
+  const c = colors[status];
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-md" style={{ backgroundColor: c.bg }}>
+      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.dot }} />
+      <div>
+        <div className="text-[9px] text-[#66707A] uppercase tracking-wider font-bold">{label}</div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[15px] font-bold text-[#1A1E23] tabular-nums">{value}</span>
+          <span className="text-[10px] text-[#66707A]">{sub}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const RISK_EVENTS = [
+  { severity: 'Critical', time: '14:28', title: 'Pipeline Throughput Deviating from LLM Confidence Band', desc: 'ANO-2026-0512 — 92% breach probability within 48H, investigation recommended', location: 'Aktau · GCS-001', route: '/warning/timeseries/ANO-2026-0512' },
+  { severity: 'Critical', time: '13:15', title: 'Western Caspian Energy — High-Risk Pattern Match', desc: 'SCADA pattern matches confirmed overproduction cases (similarity 0.87); cross-anomalies in financial & emissions data', location: 'Aktau · ENT-0091', route: '/warning/enterprise/ENT-0091' },
+  { severity: 'Warning', time: '11:42', title: 'Pavlodar GRES-1 Coal Consumption Drift', desc: '24H coal consumption rate 2.1σ above historical average; may impact supply stability if sustained', location: 'Pavlodar · GRES-1' },
+  { severity: 'Warning', time: '10:08', title: 'Atyrau Refinery Emissions Exceedance Warning', desc: '3 consecutive days near threshold; 68% probability of exceedance within 72H without intervention', location: 'Atyrau · ATY-REF-01' },
+  { severity: 'Warning', time: '09:30', title: 'KEGOC 220kV Line Imbalance', desc: 'Three-phase imbalance on North-South transmission corridor exceeds warning threshold; may impact supply reliability', location: 'Astana · KEGOC-220' },
+  { severity: 'Info', time: '08:15', title: 'Mangystau SCADA Data Delay', desc: '3 telemetry stations reporting delay >30min; gateway status under investigation', location: 'Mangystau · 3 Sites' },
+  { severity: 'Info', time: '07:00', title: 'Routine Compliance Scan Complete', desc: '1,247 enterprises scanned today; 0 new high-risk items', location: 'Nationwide' },
+];
+
 export default function NationalGrid() {
   const [tab, setTab] = useState('ELECTRICITY');
-  const [events, setEvents] = useState<any[]>([]);
-  const [countdown, setCountdown] = useState(863); // 14:23 as seconds
+  const [countdown, setCountdown] = useState(299); // 4:59 as seconds
   const navigate = useNavigate();
 
   // Simulated countdown
@@ -64,82 +94,88 @@ export default function NationalGrid() {
     return `00:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  // Event feed simulation based on tab
-  useEffect(() => {
-    const generateEvent = () => {
-      const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-      const prefixes = {
-        ELECTRICITY: ['TELEMETRY SYNC', 'LINE STATUS', 'HEARTBEAT', 'AI INFERENCE', 'LOAD UPDATE'],
-        'OIL & GAS': ['PIPELINE FLOW', 'FIELD OUTPUT', 'STORAGE LEVEL', 'REFINERY STATUS', 'PORT TELEMETRY'],
-        COAL: ['EXTRACTION', 'TRANSPORT', 'POWER GEN', 'STOCKPILE', 'RADIATION CHECK']
-      };
-      const targets = {
-        ELECTRICITY: ['SUB-500-AST-001', '500KV-PAV-EKB', 'NODE-237', 'GRES-1'],
-        'OIL & GAS': ['PL-CPC-001', 'TENGIZ-01', 'BOZOI-ST', 'PAVLODAR-REF'],
-        COAL: ['EKB-MINE-2', 'RAIL-UKG-1', 'GRES-2', 'KAR-STOCK-A']
-      };
-      
-      const currentPrefixes = (prefixes as any)[tab] || prefixes.ELECTRICITY;
-      const currentTargets = (targets as any)[tab] || targets.ELECTRICITY;
-
-      return {
-        time,
-        type: currentPrefixes[Math.floor(Math.random() * currentPrefixes.length)],
-        target: currentTargets[Math.floor(Math.random() * currentTargets.length)],
-        status: Math.random() > 0.9 ? 'FLAG' : 'NOMINAL'
-      };
-    };
-
-    setEvents(Array.from({ length: 12 }).map(() => generateEvent()));
-
-    const interval = setInterval(() => {
-      setEvents(prev => [generateEvent(), ...prev].slice(0, 20));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [tab]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#FAFAFA] select-none">
-      {/* Context Bar */}
-      <div className="h-10 bg-white border-b border-border-default flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-4">
-          <span className="text-[11px] uppercase tracking-[0.1em] text-[#98A1AA] font-medium">Context: National Energy Grid</span>
-          <div className="flex gap-2">
-            <span className="bg-[#2FBF71]/10 text-[#2FBF71] px-2 py-0.5 text-[9px] font-bold rounded-sm border border-[#2FBF71]/20 uppercase tracking-widest">Live</span>
-            <span className="bg-[#F5F7F9] text-[#98A1AA] px-2 py-0.5 text-[9px] font-bold rounded-sm border border-[#E2E6EB] uppercase tracking-widest">Pre-Event</span>
-            <span className="bg-[#F5F7F9] text-[#98A1AA] px-2 py-0.5 text-[9px] font-bold rounded-sm border border-[#E2E6EB] uppercase tracking-widest">Traceability</span>
-          </div>
+      {/* KPI Strip — Vice Minister Dashboard */}
+      <div className="h-16 bg-white border-b border-border-default flex items-center px-6 shrink-0 gap-6">
+        <div className="flex items-center gap-2 mr-4">
+          <ShieldCheck size={20} className="text-[#1A1E23]" />
+          <span className="text-[13px] font-bold text-[#1A1E23] tracking-tight">Energy Oversight</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#2FBF71] animate-pulse ml-1" />
+          <span className="text-[10px] text-[#2FBF71] font-bold uppercase tracking-wider">Live</span>
         </div>
-        <div className="flex items-center gap-6 text-[11px] text-[#66707A] font-medium">
-          <span>LAST SYNC: 2026-05-28 14:32</span>
-          <span>NEXT REFRESH: <span className="text-[#1A1E23] tabular-nums">{formatCountdown(countdown)}</span></span>
+
+        <div className="h-8 w-px bg-border-default" />
+
+        <DashboardKpi label="Supply Stability Index" value="98.2%" sub="+0.3% YoY" status="good" />
+        <DashboardKpi label="Weekly Anomalies" value="12" sub="3 unresolved" status="warn" />
+        <DashboardKpi label="High-Risk Pending" value="2" sub="Response in 48H" status="critical" />
+        <DashboardKpi label="Compliance Rate" value="94.7%" sub="↑ 2.1% vs last month" status="good" />
+
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-3 text-[11px] text-[#66707A]">
+          <span className="flex items-center gap-1.5">
+            <Clock size={13} />
+            <span className="tabular-nums">{formatCountdown(countdown)}</span>
+            <span className="text-[#98A1AA]">to refresh</span>
+          </span>
         </div>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="h-11 border-b border-border-default bg-white flex shrink-0">
-        {['ELECTRICITY', 'OIL & GAS', 'COAL', 'HEATING (PENDING)'].map(t => {
-          const isPending = t.includes('PENDING');
-          const isActive = tab === t;
+      {/* Closed-Loop Tracker */}
+      <div className="h-9 bg-[#F5F7FA] border-b border-border-default flex items-center px-6 gap-1 shrink-0">
+        {[
+          { label: 'Detect', count: 12, active: true, color: '#2FBF71' },
+          { label: 'Attribute', count: 8, active: true, color: '#4A90E2' },
+          { label: 'Dispatch', count: 5, active: true, color: '#E7A53A' },
+          { label: 'Resolve', count: 3, active: true, color: '#E7A53A' },
+          { label: 'Review', count: 2, active: false, color: '#98A1AA' },
+          { label: 'Archive', count: 1, active: false, color: '#98A1AA' },
+        ].map((step, i, arr) => (
+          <React.Fragment key={step.label}>
+            <div className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-sm",
+              step.active ? "bg-white border border-border-default" : "opacity-40"
+            )}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: step.color }} />
+              <span className="text-[11px] font-bold text-[#1A1E23]">{step.label}</span>
+              <span className="text-[10px] font-mono text-[#66707A]">[{step.count}]</span>
+            </div>
+            {i < arr.length - 1 && <ChevronRight size={12} className="text-[#C9CDD4] shrink-0" />}
+          </React.Fragment>
+        ))}
+        <div className="flex-1" />
+        <button
+          onClick={() => navigate('/audit/report')}
+          className="flex items-center gap-1 text-[10px] font-bold text-[#4A90E2] hover:underline uppercase tracking-wider"
+        >
+          <FileText size={12} /> Report
+        </button>
+      </div>
+
+      {/* Tab Switcher — Layer Selector */}
+      <div className="h-9 border-b border-border-default bg-white flex shrink-0 px-6 gap-1 items-center">
+        {[
+          { key: 'ELECTRICITY', label: 'Power', icon: '⚡' },
+          { key: 'OIL & GAS', label: 'Oil & Gas', icon: '🛢' },
+          { key: 'COAL', label: 'Coal & Uranium', icon: '⛏' },
+        ].map(t => {
+          const isActive = tab === t.key;
           return (
             <button
-              key={t}
-              disabled={isPending}
-              onClick={() => setTab(t)}
+              key={t.key}
+              onClick={() => setTab(t.key)}
               className={cn(
-                "px-8 h-full text-[11px] font-bold tracking-[0.1em] transition-all relative flex items-center gap-2",
-                isActive ? "text-[#1A1E23] bg-white" : "text-[#98A1AA] hover:text-[#66707A]",
-                isPending ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+                "px-4 h-7 text-[11px] font-bold tracking-wide rounded-full transition-all",
+                isActive
+                  ? "bg-[#1A1E23] text-white"
+                  : "text-[#66707A] hover:bg-[#F5F7FA] hover:text-[#1A1E23]"
               )}
             >
-              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#1A1E23]" />}
-              {t}
-              {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1A1E23]" />}
-              {isPending && (
-                <div className="absolute left-1/2 -top-8 -translate-x-1/2 bg-[#1A1E23] text-white text-[9px] px-2 py-1 rounded shadow-sm opacity-0 hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Data source pending integration
-                </div>
-              )}
+              <span className="mr-1.5">{t.icon}</span>
+              {t.label}
             </button>
           );
         })}
@@ -248,37 +284,14 @@ export default function NationalGrid() {
             </>
           )}
 
-          {tab.includes('HEATING') && (
-            <div className="flex-1 flex flex-col items-center justify-center opacity-30 text-center p-6 gap-4">
-              <Flame size={48} className="text-[#98A1AA]" />
-              <div className="all-caps-label text-[10px]">Architecture Pending</div>
-            </div>
-          )}
         </div>
 
         {/* Center Map Area */}
         <div className="flex-1 relative bg-[#FAFAF8] overflow-hidden">
-          {tab.includes('HEATING') ? (
-            <div className="absolute inset-0 z-[1001] flex items-center justify-center bg-white/40 backdrop-blur-[1px]">
-              <div className="bg-white border border-border-default p-10 rounded shadow-2xl flex flex-col items-center text-center max-w-sm gap-6">
-                <div className="w-16 h-16 bg-[#F5F7F9] rounded-full flex items-center justify-center text-[#98A1AA]">
-                   <Info size={32} />
-                </div>
-                <div className="space-y-2">
-                  <div className="text-[14px] font-bold uppercase tracking-[0.15em] text-[#1A1E23]">No Data Source</div>
-                  <div className="text-[12px] font-medium uppercase tracking-[0.1em] text-[#66707A]">Heating Domain Data integration pending</div>
-                  <p className="text-[11px] text-[#98A1AA] leading-relaxed mt-2">
-                    This module will be activated after heating sector data is integrated into the National Energy Technology platform.
-                  </p>
-                </div>
-                <Button variant="primary" className="w-full h-10 text-[11px] uppercase tracking-widest">Request Data Integration</Button>
-              </div>
-            </div>
-          ) : (
-            <MapContainer 
-              center={[48.5, 68.0]} 
-              zoom={4.3} 
-              className="h-full w-full bg-[#FAFAF8]" 
+            <MapContainer
+              center={[48.5, 68.0]}
+              zoom={4.3}
+              className="h-full w-full bg-[#FAFAF8]"
               zoomControl={false}
               attributionControl={false}
               minZoom={3.8}
@@ -385,27 +398,54 @@ export default function NationalGrid() {
               {/* Coal Layer */}
               {tab === 'COAL' && (
                 <>
-                  {COAL_BASINS.map(b => (
-                    <Circle 
-                      key={b.id} 
-                      center={b.coords as any} 
-                      radius={50000} // Approximate radius for visualization
-                      pathOptions={{ color: b.color || '#3A3A3A', weight: 1, fillOpacity: 0.15, fillColor: b.color || '#3A3A3A' }} 
+                  {COAL_BASINS.map(b => {
+                    const isLargest = (b as any).isLargest;
+                    return (
+                    <Circle
+                      key={b.id}
+                      center={b.coords as any}
+                      radius={isLargest ? 80000 : 50000}
+                      pathOptions={{
+                        color: b.color || '#3A3A3A',
+                        weight: isLargest ? 2.5 : 1,
+                        fillOpacity: isLargest ? 0.25 : 0.12,
+                        fillColor: b.color || '#3A3A3A',
+                        dashArray: isLargest ? undefined : undefined,
+                      }}
                     >
                       <Popup className="custom-popup">
                         <div className="p-2">
                           <div className="all-caps-label text-[9px] mb-1 uppercase text-[#98A1AA]">Coal Basin</div>
                           <div className="text-[12px] font-bold uppercase tracking-tight text-[#1A1E23]">{b.name}</div>
                           <div className="text-[10px] text-[#66707A] mt-1">{b.type} · {b.reserves}</div>
+                          {isLargest && <div className="text-[10px] font-bold text-[#D8454C] mt-1 uppercase">★ Largest Coal Basin · Data Center Power Source</div>}
+                          {(b as any).region && <div className="text-[9px] text-[#98A1AA] mt-0.5">{(b as any).region} Region</div>}
                         </div>
                       </Popup>
                     </Circle>
-                  ))}
+                  )})}
                   {COAL_MINES.map(m => (
-                    <Marker key={m.id} position={m.coords as any} icon={ICONS.MINE} />
+                    <Marker key={m.id} position={m.coords as any} icon={ICONS.MINE}>
+                      <Popup className="custom-popup">
+                        <div className="p-2">
+                          <div className="all-caps-label text-[9px] mb-1 text-[#98A1AA]">Coal Mine</div>
+                          <div className="text-[12px] font-bold text-[#1A1E23]">{m.name}</div>
+                          <div className="text-[10px] text-[#66707A] mt-1">{m.basin} Basin · {m.type}</div>
+                        </div>
+                      </Popup>
+                    </Marker>
                   ))}
                   {MINE_MOUTH_PLANTS.map(p => (
-                    <Marker key={p.id} position={p.coords as any} icon={ICONS.MINE_MOUTH} />
+                    <Marker key={p.id} position={p.coords as any} icon={ICONS.MINE_MOUTH}>
+                      <Popup className="custom-popup">
+                        <div className="p-2 min-w-[160px]">
+                          <div className="all-caps-label text-[9px] mb-1 text-[#98A1AA]">Mine-Mouth Plant</div>
+                          <div className="text-[12px] font-bold text-[#1A1E23]">{p.name}</div>
+                          <div className="text-[10px] text-[#66707A] mt-1">{p.mw} MW · {(p as any).fuel}</div>
+                          {(p as any).note && <div className="text-[10px] font-bold text-[#D8454C] mt-1">⚡ {(p as any).note}</div>}
+                        </div>
+                      </Popup>
+                    </Marker>
                   ))}
                   {URANIUM_MINES.map(u => (
                     <Marker key={u.id} position={u.coords as any} icon={ICONS.URANIUM}>
@@ -458,73 +498,66 @@ export default function NationalGrid() {
 
               <ZoomControl position="topright" />
             </MapContainer>
-          )}
 
           <MapLegend tab={tab} />
           
           <div className="absolute bottom-4 left-4 z-[1000] bg-white/80 backdrop-blur-md border border-border-default px-3 py-1.5 shadow-xl rounded-sm">
-             <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-[#98A1AA]">
+             <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-[#66707A]">
                <div className="w-1.5 h-1.5 rounded-full bg-[#2FBF71] animate-pulse" />
-               Live Telemetry · 15-Min Cycle · National Overlay
+               SCADA 15-Min Reporting · AI Continuous Inference · Nationwide
              </div>
           </div>
         </div>
 
-        {/* Right Event Feed Column */}
-        <div className="w-[320px] border-l border-border-default bg-white flex flex-col overflow-hidden shrink-0">
+        {/* Right Risk Panel */}
+        <div className="w-[300px] border-l border-border-default bg-white flex flex-col overflow-hidden shrink-0">
           <div className="p-4 border-b border-border-default flex items-center justify-between bg-white shrink-0">
-            <SectionTitle className="mb-0">Live Event Feed</SectionTitle>
-            <span className="flex items-center gap-1.5 text-[#2FBF71] text-[10px] font-bold uppercase tracking-widest">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#2FBF71]" />
-              Live
-            </span>
+            <div className="flex items-center gap-2">
+              <Bell size={14} className="text-[#1A1E23]" />
+              <span className="text-[11px] font-bold text-[#1A1E23] uppercase tracking-wider">Risk Events</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="text-[10px] font-bold text-[#E14B4B] border-b border-[#E14B4B]">Critical 2</button>
+              <button className="text-[10px] font-bold text-[#98A1AA] hover:text-[#E7A53A]">Warning 5</button>
+              <button className="text-[10px] font-bold text-[#98A1AA] hover:text-[#66707A]">Info 5</button>
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 font-mono select-text bg-[#FAFAFA]">
-            {events.map((e, idx) => (
-              <div key={idx} className={cn(
-                "text-[11px] leading-relaxed border-l-2 pl-3 py-1 transition-all",
-                e.status === 'FLAG' ? "border-[#E7A53A] bg-[#E7A53A]/5 shadow-sm" : "border-[#E2E6EB] hover:border-[#1A1E23]"
-              )}>
-                <div className="flex items-center gap-2 text-[#98A1AA] mb-0.5">
-                  <span className="tabular-nums">[{e.time}]</span>
-                  {e.status === 'FLAG' && <AlertTriangle size={10} className="text-[#E7A53A]" />}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {RISK_EVENTS.map((ev, idx) => (
+              <div
+                key={idx}
+                onClick={() => ev.route && navigate(ev.route)}
+                className={cn(
+                  "p-4 border-b border-border-default cursor-pointer hover:bg-[#FAFAFA] transition-colors group",
+                  ev.severity === 'Critical' ? "border-l-[3px] border-l-[#E14B4B]" : "border-l-[3px] border-l-transparent"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider",
+                    ev.severity === 'Critical' ? "bg-[#E14B4B]/10 text-[#E14B4B]" :
+                    ev.severity === 'Warning' ? "bg-[#E7A53A]/10 text-[#E7A53A]" :
+                    "bg-[#98A1AA]/10 text-[#66707A]"
+                  )}>
+                    {ev.severity}
+                  </span>
+                  <span className="text-[9px] text-[#98A1AA] font-mono">{ev.time}</span>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-2">
-                   <span className="text-[#1A1E23] font-bold uppercase tracking-tighter">{e.type}</span>
-                   <span className="text-[#98A1AA]">/</span>
-                   <span className={cn("font-medium", e.status === 'FLAG' ? "text-[#E7A53A]" : "text-[#66707A]")}>
-                     {e.target}
-                   </span>
+                <div className="text-[11px] font-bold text-[#1A1E23] mb-1 leading-tight">{ev.title}</div>
+                <div className="text-[10px] text-[#66707A] leading-relaxed line-clamp-2 mb-2">{ev.desc}</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] text-[#98A1AA] font-bold uppercase">{ev.location}</span>
+                  <span className="text-[9px] font-bold text-[#4A90E2] flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Drill Down <ChevronRight size={10} />
+                  </span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="p-5 bg-white border-t border-border-default shrink-0">
-            <div className="flex items-center justify-between mb-4">
-              <div className="all-caps-label text-[9px] text-[#98A1AA]">Past 24H Activity Density</div>
-              <div className="text-[9px] font-bold tabular-nums text-[#66707A]">v.0.98.4</div>
-            </div>
-            <div className="h-12 flex items-end gap-[1.5px] px-0.5">
-              {Array.from({ length: 54 }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className={cn(
-                    "flex-1 rounded-t-[1px] transition-all duration-300 hover:scale-y-110 cursor-help",
-                    i === 53 ? "bg-[#E14B4B]" : "bg-[#1A1E23]/20"
-                  )} 
-                  style={{ height: `${Math.random() * 80 + 20}%` }} 
-                  title={`${Math.floor(Math.random() * 50)} events`}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between mt-2 text-[8px] all-caps-label text-[#98A1AA] tracking-widest font-bold">
-              <span>Past 24H</span>
-              <span>NOMINAL</span>
-              <span>Now</span>
-            </div>
-            <Button variant="secondary" className="w-full h-9 mt-5 text-[10px] uppercase tracking-widest font-bold group" onClick={() => {}}>
-              View All Events <ChevronRight size={12} className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
+          <div className="p-4 bg-white border-t border-border-default shrink-0">
+            <button onClick={() => navigate('/audit/report')} className="w-full h-10 bg-[#1A1E23] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-black transition-colors flex items-center justify-center gap-2 rounded-sm">
+              <FileCheck size={14} /> View All Events
+            </button>
           </div>
         </div>
       </div>

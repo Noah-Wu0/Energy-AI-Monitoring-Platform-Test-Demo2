@@ -39,9 +39,9 @@ const MATRIX_ROWS = [
 ];
 
 const NARRATIVE = [
-  { section: 'EVIDENCE CHAIN', text: 'Cross-system reconciliation reveals a persistent divergence between SCADA-logged generation (+15.7%) and fuel-consumption baselines (-13.5%). This decoupled state suggests capacity beyond declared parameters.' },
-  { section: 'INFERENCE', text: 'Physical identity triangulation (Heat-Rate ↔ Carbon) places the probability of unreported expansion at 0.87. Discrepancies in finance billing align with excessive SCADA logs, confirming high fiscal materiality.' },
-  { section: 'POLICY IMPLICATION', text: 'Violation of national grid balancing protocols detected. Breach of Title III energy disclosure requirements. Immediate escalation for physical audit of Turbine Units 1-4 required.' }
+  { section: 'AI Pattern Match', text: 'System cross-referenced 5 data sources: SCADA generation logs (+15.7%) and fuel consumption baseline (-13.5%) show physically irreconcilable deviation. Current operating pattern matches confirmed overproduction violation cases (similarity 0.87, 95% CI: 0.82-0.92) — classified as high-risk behavior pattern.' },
+  { section: 'AI Attribution', text: 'Heat-rate and carbon-emissions physical triangle verification confirms output data validity is questionable. Financial invoice anomalies, SCADA time-series mutations, and equipment procurement records triangulate to unreported capacity expansion (posterior probability 0.85). Derived by 6-Agent Bayesian ensemble.' },
+  { section: 'Warning & Recommendation', text: '68% probability of safety incident (equipment overload / emissions exceedance) within 90 days. Recommend on-site inspection of Turbine Units 1-4 within 72H; freeze approval workflows concurrently. Similar historical cases accumulated 240M KZT in fines.' }
 ];
 
 const WORKFLOW_DATA = {
