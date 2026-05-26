@@ -22,10 +22,6 @@ cd Energy-AI-Monitoring-Platform-Test-Demo2
 
 # 3. 安装依赖
 npm install
-
-# 4. 配置 Gemini API Key
-cp .env.example .env
-# 编辑 .env 文件，填入你的 GEMINI_API_KEY
 ```
 
 ## 启动
@@ -34,7 +30,7 @@ cp .env.example .env
 npm run dev
 ```
 
-浏览器访问 `http://localhost:3000`。
+浏览器访问 `http://localhost:3000`，即可查看 Demo。
 
 ## 页面导航
 
@@ -53,7 +49,7 @@ npm run dev
 
 - 纯前端原型，数据硬编码在 TypeScript 文件中，无后端 API
 - 部分模块标注为"PENDING"状态（供热数据待接入）
-- 需 `GEMINI_API_KEY` 环境变量（用于 AI 解释等动态功能）
+- 无需 API Key，所有功能开箱即用
 - 地图使用 CartoDB 免费瓦片，无需 token
 
 ## 构建生产版本
