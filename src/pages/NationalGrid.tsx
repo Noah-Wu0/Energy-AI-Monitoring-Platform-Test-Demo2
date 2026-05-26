@@ -46,8 +46,8 @@ const createDivIcon = (html: string, size: [number, number] = [12, 12]) => L.div
 const ICONS = {
   CITY: (name: string, isCapital?: boolean) => createDivIcon(`
     <div class="flex flex-col items-center">
-      <div class="w-2 h-2 ${isCapital ? 'bg-[#264653] border-[1.5px] border-[#C5A059] scale-125' : 'bg-[#264653]'} border border-white rounded-full shadow-sm"></div>
-      <div class="mt-1 text-[8px] font-bold text-[#2F4858] uppercase tracking-wider drop-shadow-sm whitespace-nowrap">${name}${isCapital ? ' ★' : ''}</div>
+      <div class="w-2.5 h-2.5 ${isCapital ? 'bg-[#102A43] border-[1.5px] border-[#C5A059] scale-125' : 'bg-[#264653]'} border border-white rounded-full shadow-sm"></div>
+      <div class="mt-1 text-[8px] font-bold ${isCapital ? 'text-[#102A43]' : 'text-[#264653]'} uppercase tracking-wider drop-shadow-sm whitespace-nowrap">${name}${isCapital ? ' ★' : ''}</div>
     </div>`, [40, 30]),
   
   // Electricity
@@ -117,7 +117,36 @@ const WORLD_OUTER: [number, number][] = [
 ];
 const maskCoordinates = [WORLD_OUTER, KZ_BORDER_DETAILED];
 
-// No colorful regions anymore; we use a minimalistic approach.
+// Memoized region polygon to avoid heavy re-renders
+const RegionPolygon = React.memo(function RegionPolygon({
+  poly,
+  isHovered,
+  onMouseOver,
+  onMouseOut
+}: {
+  poly: any;
+  isHovered: boolean;
+  onMouseOver: () => void;
+  onMouseOut: () => void;
+}) {
+  return (
+    <Polygon
+      positions={poly}
+      pathOptions={{
+        fillColor: '#D1D8D1', // 行政边界 浅灰绿
+        fillOpacity: isHovered ? 0.08 : 0,
+        color: '#D1D8D1',
+        weight: isHovered ? 2.0 : 0.9,
+        opacity: isHovered ? 0.8 : 0.45,
+        className: 'glowing-light-green-border'
+      }}
+      eventHandlers={{
+        mouseover: onMouseOver,
+        mouseout: onMouseOut,
+      }}
+    />
+  );
+});
 
 export default function NationalGrid() {
   const [tab, setTab] = useState('ELECTRICITY');
@@ -372,16 +401,17 @@ export default function NationalGrid() {
         </div>
 
         {/* Center Map Area */}
-          <div className="flex-1 relative bg-[#E5DFD2] overflow-hidden">
+        <div className="flex-1 relative bg-[#F5F2EA] overflow-hidden">
             <MapContainer
               center={[48.0, 67.0]}
               zoom={5}
               className="h-full w-full"
-              style={{ background: '#E5DFD2' }}
+              style={{ background: '#F5F2EA' }}
               zoomControl={false}
               attributionControl={false}
               minZoom={4}
               maxZoom={7}
+              preferCanvas={true}
             >
               <SetMapView />
               
@@ -390,14 +420,14 @@ export default function NationalGrid() {
                 url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
                 errorTileUrl=""
                 className="map-tiles-layer"
-                opacity={0.15} // Extremely low opacity so terrain/boundaries inside background do not distract from the main grid
+                opacity={0.25} // Muted background maps
               />
 
-              {/* Base Kazakhstan Mainland filled with Warmer White (#F8F6EF) */}
+              {/* Base Kazakhstan Mainland filled with Ivory White (#FBFAF5) */}
               <Polygon
                 positions={KZ_BORDER_DETAILED as any}
                 pathOptions={{
-                  fillColor: '#F8F6EF',
+                  fillColor: '#FBFAF5',
                   fillOpacity: 1,
                   color: 'transparent',
                   weight: 0,
@@ -409,30 +439,21 @@ export default function NationalGrid() {
               {KZ_REGIONS.map(region => {
                 const isHovered = hoveredRegion === region.name;
                 return region.polygons.map((poly, i) => (
-                  <Polygon
+                  <RegionPolygon
                     key={`${region.name}-${i}`}
-                    positions={poly as any}
-                    pathOptions={{
-                      fillColor: '#C8CEC6', // 行政边界 浅灰绿色
-                      fillOpacity: isHovered ? 0.08 : 0, 
-                      color: '#C8CEC6',
-                      weight: isHovered ? 1.8 : 0.8, // thin borders
-                      opacity: isHovered ? 0.8 : 0.5, // low opacity to remain very weak
-                      className: 'glowing-light-green-border'
-                    }}
-                    eventHandlers={{
-                      mouseover: () => setHoveredRegion(region.name),
-                      mouseout: () => setHoveredRegion(null),
-                    }}
+                    poly={poly}
+                    isHovered={isHovered}
+                    onMouseOver={() => setHoveredRegion(region.name)}
+                    onMouseOut={() => setHoveredRegion(null)}
                   />
                 ));
               })}
 
-              {/* 2) World Dimming Mask — surrounding region mask (#E5DFD2) */}
+              {/* 2) World Dimming Mask — surrounding region mask (#ECE8DF) */}
               <Polygon
                 positions={maskCoordinates as any}
                 pathOptions={{
-                  fillColor: '#E5DFD2', // 周边区域 稍暗的灰米色
+                  fillColor: '#ECE8DF', // 周边区域
                   fillOpacity: 1.0,
                   color: 'transparent',
                   weight: 0,
@@ -440,26 +461,26 @@ export default function NationalGrid() {
                 }}
               />
 
-              {/* 3a) National border outer stroke layer (soft white outline #FFFFFF, opacity 35%, 3px weight for contrast) */}
+              {/* 3a) National border outer stroke layer (soft anti-aliasing #D8DDD6, opacity 40%, wider weight) */}
               <Polygon
                 positions={KZ_BORDER_DETAILED as any}
                 pathOptions={{
                   fill: false,
-                  color: '#FFFFFF',
-                  weight: 3.0,
-                  opacity: 0.35,
+                  color: '#D8DDD6',
+                  weight: 3.2,
+                  opacity: 0.4,
                   interactive: false,
                 }}
               />
 
-              {/* 3b) National border highlight — dark grey-green main stroke (#5F746D, opacity 90%, 1.7px width) */}
+              {/* 3b) National border highlight — grey-green main stroke (#7D8C84, width 1.3px) */}
               <Polygon
                 positions={KZ_BORDER_DETAILED as any}
                 pathOptions={{
                   fill: false,
-                  color: '#5F746D', // 国界 低饱和深灰绿色
-                  weight: 1.7,
-                  opacity: 0.9,
+                  color: '#7D8C84', // 国界 灰绿色
+                  weight: 1.3,
+                  opacity: 1,
                   className: 'glowing-border'
                 }}
               />
@@ -472,11 +493,11 @@ export default function NationalGrid() {
                       positions={[line.from as any, line.to as any]} 
                       color={
                         line.status === 'PLANNED' || line.type === 'INTER' ? '#9A9A9A' : // 外部连接和规划线: #9A9A9A
-                        line.type === '220kV' ? '#A78257' : // 普通线路: #A78257
-                        '#8A623B' // 主线路: #8A623B 深棕铜色 (1150kV, 500kV, etc.)
+                        line.type === '1150kV' ? '#6F4A28' : // 重点线路: #6F4A28
+                        '#9C6B3C' // 主干线路: #9C6B3C 深棕铜色 (500kV, 220kV, etc.)
                       } 
                       weight={
-                        line.type === '1150kV' ? 2.4 : 
+                        line.type === '1150kV' ? 2.5 : 
                         line.type === '500kV' ? 1.8 : 
                         line.type === 'INTER' ? 2.0 : 
                         1.2
@@ -488,8 +509,8 @@ export default function NationalGrid() {
                       }
                       opacity={
                         line.status === 'PLANNED' || line.type === 'INTER' ? 0.75 : 
-                        line.type === '220kV' ? 0.75 : // 普通线路降低透明度至 70%-80%
-                        0.88 // Main lines also slightly muted so they do not overpower the country outline
+                        line.type === '220kV' ? 0.72 : // 普通线路降低透明度至 70%-75%
+                        0.9
                       } 
                     />
                   ))}
@@ -525,7 +546,7 @@ export default function NationalGrid() {
                     <Polyline 
                       key={p.id} 
                       positions={[p.from as any, p.to as any]} 
-                      color={p.type === 'OIL' ? '#8A623B' : '#8A623B'} // Oil & Gas major lines both use #8A623B
+                      color={p.type === 'OIL' ? '#6F4A28' : '#9C6B3C'} // OIL: 重点线路 #6F4A28, GAS: 主干线路 #9C6B3C
                       weight={p.width || 2} 
                       opacity={0.85} 
                     />
@@ -786,15 +807,15 @@ function MapLegend({ tab }: { tab: string }) {
             <div className="space-y-1.5">
               {tab === 'ELECTRICITY' ? (
                 <>
-                  <LegendItem color="#8A623B" label="1150 kV Backbone (Main Line)" />
-                  <LegendItem color="#8A623B" label="500 kV Grid (Main Line)" />
-                  <LegendItem color="#A78257" label="220 kV Grid (Ordinary Line)" opacity={0.75} />
+                  <LegendItem color="#6F4A28" label="1150 kV Backbone (Key Line)" />
+                  <LegendItem color="#9C6B3C" label="500 kV Grid (Trunk Line)" />
+                  <LegendItem color="#9C6B3C" label="220 kV Grid (Ordinary Line)" opacity={0.72} />
                   <LegendItem color="#9A9A9A" label="Transit Interconnects (Planned)" dashed />
                 </>
               ) : (
                 <>
-                  <LegendItem color="#8A623B" label="Oil Trunk (Main Line)" />
-                  <LegendItem color="#8A623B" label="Gas Trunk (Main Line)" />
+                  <LegendItem color="#6F4A28" label="Oil Trunk (Key Line)" />
+                  <LegendItem color="#9C6B3C" label="Gas Trunk (Trunk Line)" />
                   <LegendItem color="#9A9A9A" label="Energy Rail Link (External)" dashed />
                 </>
               )}
