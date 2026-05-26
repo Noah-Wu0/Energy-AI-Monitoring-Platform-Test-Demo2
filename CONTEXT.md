@@ -1,73 +1,117 @@
-# CONTEXT.md — Energy AI Studip (Remix: AI STATECRAFT — ENERGY)
+# CONTEXT.md — Energy AI Oversight Platform (Pre-sales Demo)
 
-## 背景
+## 项目概况
 
-- **来源**：GitHub `Noah-Wu0/energy-ai-studip`，Google AI Studio 生成
-- **定位**：哈萨克斯坦能源部级 AI 监管平台概念原型（Pre-sales Demo）
-- **技术栈**：React 19 + TypeScript + Vite + Tailwind v4 + ECharts + React Leaflet + ReactFlow
-- **AI 引擎**：Google Gemini (`@google/genai`)，LLM-TS-Foundation-V2.3 时序预测模型
-- **拉取日期**：2026-05-26
+- **仓库**：https://github.com/Noah-Wu0/Energy-AI-Monitoring-Platform-Test-Demo2
+- **定位**：哈萨克斯坦能源部级 AI 监管平台概念原型，面向副部长 + 数字化司演示
+- **技术栈**：React 19 + TypeScript + Vite + Tailwind CSS v4 + ECharts + React Leaflet + ReactFlow
+- **特点**：纯前端原型，数据硬编码，无需后端/API Key，`npm install && npm run dev` 即跑
 
-## 目标
+## 运行方式
 
-向哈国能源部展示一套端到端的 AI 驱动能源监管平台：
-1. 全国能源基础设施实时感知（电力/油气/煤/供热）
-2. 管线异常 AI 预测与多算法对比
-3. 6-Agent 自动归因工作流（许可证→报告→检查→处罚→整改→复核）
-4. 全过程审计矩阵 + 监管报告自动生成
-
-## 故事线（Demo 案例）
-
-主角是 **CASE-2026-001**，Aktau 地区某油气企业（ENT-0091）：
-
-```
-[感知层] 全国电网地图 → 下钻 Aktau 地区 → 发现管线输送量异常 ANO-2026-0512
-    ↓
-[预警层] 时序图上 LLM 预测 vs 实际值出现持续性偏离（偏差 +23.2%，持续 42 小时）
-         3 个假说并行推理，历史类似案例匹配（相似度 0.87）
-    ↓
-[归因层] 触发 6-Agent 工作流，12 个月内 27 个事件跨许可/报告/检查/处罚/整改/复核 6 条泳道追踪
-         Master Agent 贝叶斯集成：posterior 0.85 指向"未申报产能扩张"
-         知识图谱 7 层节点（物理资产→法律实体→财务流）挖掘隐藏关联
-    ↓
-[审计层] 9 阶段 × 多层级生命周期矩阵，瓶颈分析 + 优化模拟器（预计节省 35% 时间）
-         自动生成部长简报
+```bash
+git clone https://github.com/Noah-Wu0/Energy-AI-Monitoring-Platform-Test-Demo2.git
+cd Energy-AI-Monitoring-Platform-Test-Demo2
+npm install
+npm run dev
+# 打开 http://localhost:3000
 ```
 
-## 页面路由结构
+无需配置任何环境变量。
 
-| 路由 | 页面 | 说明 |
-|------|------|------|
-| `/sensing/national-grid` | NationalGrid | 全国能源地图，四层切换 |
-| `/sensing/regional/:regionId` | RegionalFacilities | 区域设施（Aktau demo） |
-| `/warning/timeseries` | PipelineTimeSeries | 管线时序异常检测 |
-| `/warning/enterprise` | EnterpriseReporting | 企业跨系统数据对账 |
-| `/attribution/workflow` | WorkflowAttribution | 6-Agent 归因工作流 |
-| `/attribution/graph` | KnowledgeGraph | 知识图谱挖掘 |
-| `/audit/event/:caseId` | EventAudit | 生命周期审计矩阵 |
-| `/audit/report` | ReportGeneration | 报告自动生成 |
+## 页面路由
 
-## 关键数据文件
+| 路由 | 页面 | 所属幕 |
+|------|------|--------|
+| `/sensing/national-grid` | 副部长 Dashboard（全国能源地图 + KPI + 闭环追踪 + 风险事件） | Act I: 全景风险感知 |
+| `/sensing/regional/:id` | 区域设施下钻（Aktau 等） | Act I 下钻 |
+| `/warning/timeseries` | 管线时序 AI 预测 + 多算法对比 + 历史案例匹配 + 未来风险预测 | Act II: 告警到归因 |
+| `/warning/enterprise` | 企业跨系统数据对账（Identity Graph + Reconciliation Matrix + AI Narrative） | Act II 交叉验证 |
+| `/attribution/workflow` | 6-Agent 贝叶斯集成归因工作流 | Act III: 监管处置闭环 |
+| `/attribution/graph` | 知识图谱关联挖掘 | Act III 证据支撑 |
+| `/audit/event/:id` | 生命周期审计矩阵（9 阶段 × 5 层级） | Act III 审计留痕 |
+| `/audit/report` | 监管报告自动生成 | Act IV: 效能量化 |
 
-- `src/data/geo.ts` — 城市坐标（7 个主要城市）
+## 数据文件
+
+- `src/data/geo.ts` — 7 个主要城市坐标
 - `src/data/electricity.ts` — 发电站/变电站/输电线路
 - `src/data/oilgas.ts` — 油田/气田/炼油厂/管线
-- `src/data/coal.ts` — 煤田/铀矿/铁路
-- `src/data/aktau/` — Aktau 地区详细数据（企业/节点/连接/告警/设备）
+- `src/data/coal.ts` — 煤田/铀矿/铁路（已补 Pavlodar/Ekibastuz 数据）
+- `src/data/aktau/` — Aktau 地区详细数据
 - `src/data/anomaly/` — 异常检测数据（队列/时序/算法对比/类似案例）
-- `src/data/attribution/case_001_attribution.ts` — 6-Agent 归因完整数据
+- `src/data/attribution/case_001_attribution.ts` — 6-Agent 归因数据
 - `src/data/audit/case_001_lifecycle_matrix.ts` — 审计矩阵数据
 - `src/data/graph/case_001_graph.ts` — 知识图谱数据
 
-## 特殊规则
+## 已完成的修改（2026-05-26）
 
-- 项目是**纯前端原型**，数据全部硬编码在 TypeScript 文件中，无后端 API
-- 部分模块标注为"PENDING"状态（Heating 数据源待接入）
-- 运行需 `GEMINI_API_KEY` 环境变量（用于 AI 解释等动态功能）
+### 语言 - 全部英文化
+所有 UI 文案、数据标签、KPI 均已从中文转为英文。
+
+### P0 修改（对应努尔 2026-05-25 批评意见）
+
+1. **Pavlodar 煤矿数据** — `coal.ts` 已补 Ekibastuz 盆地（12.5 Gt, KZ 最大）+ GRES-1/GRES-2 + Aksu 电站
+2. **NationalGrid 重构为副部长 Dashboard** — 新增 KPI 条（供给稳定性/异常事件/待处置/合规率）+ 闭环追踪条（Detect→Attribute→Dispatch→Resolve→Review→Archive）+ 风险事件分级面板
+3. **PipelineTimeSeries 叙事从"发现"改为"预测"** — 全部文案改为 pre-emptive prediction，新增 Future Risk Forecast（30D/90D horizon）
+4. **所有数字加置信区间** — `ano_0512_metadata.ts` 中所有 KPI 附带 95% CI 和回测准确率
+5. **LeftMenu 重构成 4 幕闭环故事** — Act I 全景风险感知 → Act II 告警到归因 → Act III 监管处置闭环 → Act IV 效能量化
+
+### P1 修改
+
+6. **EnterpriseReporting 增加模式匹配逻辑** — NARRATIVE 改为三阶段（AI Pattern Match → AI Attribution → Warning & Recommendation），跨 5 系统自动关联分析
+
+### 其他清理
+
+- 移除 `vite.config.ts` 中未使用的 `GEMINI_API_KEY` 注入逻辑
+- 简化 `.env.example`
+- 更新 README.md（中文，含下载 / 安装 / 使用说明）
+
+## 待修改清单（P1/P2，留给 Codex）
+
+以下来自努尔的批评意见，尚未在代码中落地：
+
+### 待做 #1：首页侧面板折叠
+- **位置**：`src/pages/NationalGrid.tsx`
+- **当前状态**：左侧统计面板（240px）和右侧风险事件面板（300px）固定宽度
+- **期望**：两侧面板可折叠，默认折叠/半折叠，让地图成为唯一主视觉焦点
+
+### 待做 #2：WorkflowAttribution 增加预防干预节点
+- **位置**：`src/pages/WorkflowAttribution.tsx` + `src/data/attribution/case_001_attribution.ts`
+- **当前状态**：6 条泳道覆盖许可证→报告→检查→处罚→整改→复核（事后追溯闭环）
+- **期望**：在 Master Agent 输出后增加"建议预防措施"节点——不只是说"未申报产能扩张"，而是"类似模式在未来 90 天内有 68% 概率导致安全事故"
+
+### 待做 #3：有 AI vs 没 AI 对比模块
+- **位置**：`src/pages/NationalGrid.tsx` 或 `src/pages/PipelineTimeSeries.tsx`
+- **当前状态**：没有对比展示
+- **期望**：首页或预警页增加对比模块，用具体数字展示传统方法 vs AI 方法的价值差
+  - 传统：人工比对 5 系统数据 → 平均 72 小时发现异常
+  - AI：跨系统自动关联 → 实时发现 + 推理归因
+
+### 待做 #4：EventAudit 增加时限追踪
+- **位置**：`src/pages/EventAudit.tsx`
+- **当前状态**：阶段 × 层级矩阵视图，无时间轴
+- **期望**：增加时间轴追踪视图，每个阶段标注实际耗时 vs 预期耗时，突出瓶颈
+
+### 待做 #5：TCO / 部署概览模块
+- **位置**：新页面或在 `src/pages/ReportGeneration.tsx` 中增加 tab
+- **期望**：回答——推荐模型规模、推理延迟、硬件配置（本地化 vs 云部署）、预估年 TCO、对比传统方案的成本节约
+
+### 待做 #6：首页增加"潜在损失规避"指标
+- **位置**：`src/pages/NationalGrid.tsx` KPI 区域
+- **期望**：量化如果不预警的损失（如：该异常持续 30 天将导致 XXX 方天然气浪费 / XXX 吨碳排放超标）
+
+## 努尔核心自检标准（修改时对照）
+
+1. 这是副部长想看的吗？（不是工程师视角，不是企业经理视角）
+2. 是事前预警还是事后追溯？（事后 = 降级为历史参考案例）
+3. 有数字就有置信区间吗？（没有就别放）
+4. 这一屏只有一个重点吗？（超过一个 = 太复杂，拆开）
+5. 这个故事形成闭环了吗？（发现→归因→分派→处置→审计）
+
+## 数据约束
+
+- 所有数据硬编码在 TypeScript 文件中，无后端 API
+- 部分模块标注 "PENDING"（Heating 数据源待接入）
 - 地图使用 CartoDB 免费瓦片，无需 token
-
-## 当前状态
-
-- 代码完整可运行，8 个页面全部可交互
-- 数据以 CASE-2026-001 为例贯穿全流程
-- 可作为售前演示材料，需配合口头讲解故事线
+- `@google/genai` 已安装但未使用（AI Studio 模板遗留），运行无需 API Key
