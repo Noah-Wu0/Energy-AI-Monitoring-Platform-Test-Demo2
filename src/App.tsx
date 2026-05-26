@@ -5,10 +5,12 @@ import { Layout } from './components/Layout';
 // Pages
 import NationalGrid from './pages/NationalGrid';
 import RegionalFacilities from './pages/RegionalFacilities';
+import PipelineDecision from './pages/PipelineDecision';
 import PipelineTimeSeries from './pages/PipelineTimeSeries';
 import EnterpriseReporting from './pages/EnterpriseReporting';
 import WorkflowAttribution from './pages/WorkflowAttribution';
 import KnowledgeGraph from './pages/KnowledgeGraph';
+import EventAuditSla from './pages/EventAuditSla';
 import EventAudit from './pages/EventAudit';
 import ReportGeneration from './pages/ReportGeneration';
 
@@ -27,8 +29,9 @@ export default function App() {
           </Route>
 
           <Route path="warning">
-            <Route path="timeseries" element={<PipelineTimeSeries />} />
-            <Route path="timeseries/:anomalyId" element={<PipelineTimeSeries />} />
+            <Route path="timeseries" element={<PipelineDecision />} />
+            <Route path="timeseries/:anomalyId" element={<PipelineDecision />} />
+            <Route path="timeseries/:anomalyId/diagnostics" element={<PipelineTimeSeries />} />
             <Route path="enterprise" element={<EnterpriseReporting />} />
             <Route path="enterprise/:entId" element={<EnterpriseReporting />} />
           </Route>
@@ -41,7 +44,8 @@ export default function App() {
           </Route>
 
           <Route path="audit">
-            <Route path="event/:caseId" element={<EventAudit />} />
+            <Route path="event/:caseId" element={<EventAuditSla />} />
+            <Route path="event/:caseId/matrix" element={<EventAudit />} />
             <Route path="report" element={<ReportGeneration />} />
           </Route>
         </Route>

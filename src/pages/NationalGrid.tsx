@@ -1,15 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, ZoomControl } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, ZoomControl, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { KpiCard, SectionTitle, SummaryRow, Button } from '../components/UI';
+import { KpiCard, SectionTitle, SummaryRow } from '../components/UI';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/src/lib/utils';
 import { CITIES } from '../data/geo';
+import { KZ_BORDER_DETAILED } from '../data/kazakhstan-border';
+import { KZ_REGIONS, type KZRegion } from '../data/kz-regions';
 import { POWER_PLANTS, SUBSTATIONS, TRANSMISSION_LINES } from '../data/electricity';
 import { OIL_FIELDS, GAS_FIELDS, REFINERIES, PIPELINES } from '../data/oilgas';
 import { COAL_BASINS, COAL_MINES, MINE_MOUTH_PLANTS, URANIUM_MINES, COAL_RAIL } from '../data/coal';
-import { ChevronRight, AlertTriangle, ChevronDown, ChevronUp, ShieldCheck, Clock, FileCheck, FileText, Bell } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronUp, ShieldCheck, Clock, FileCheck, FileText, Bell, Layers, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
+
+// ─── Map Auto-fit component: constrains view to Kazakhstan ───
+function SetMapView() {
+  const map = useMap();
+  const hasInitialized = useRef(false);
+  
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+    
+    // Fit to Kazakhstan bounds with padding
+    const kzBounds = L.latLngBounds(KZ_BORDER_DETAILED.map(c => L.latLng(c[0], c[1])));
+    map.fitBounds(kzBounds, { padding: [20, 20], maxZoom: 5.5 });
+    
+    // Constrain panning so the user can't wander far from Kazakhstan
+    const sw = L.latLng(kzBounds.getSouth() - 5, kzBounds.getWest() - 10);
+    const ne = L.latLng(kzBounds.getNorth() + 5, kzBounds.getEast() + 10);
+    map.setMaxBounds(L.latLngBounds(sw, ne));
+  }, [map]);
+  
+  return null;
+}
 
 // Marker icon factories
 const createDivIcon = (html: string, size: [number, number] = [12, 12]) => L.divIcon({
@@ -22,8 +46,8 @@ const createDivIcon = (html: string, size: [number, number] = [12, 12]) => L.div
 const ICONS = {
   CITY: (name: string, isCapital?: boolean) => createDivIcon(`
     <div class="flex flex-col items-center">
-      <div class="w-2 h-2 ${isCapital ? 'bg-white border-2 border-status-critical scale-150' : 'bg-status-critical'} border border-white rounded-full shadow-lg"></div>
-      <div class="mt-1 text-[8px] font-bold text-[#1A1A1A] uppercase tracking-wider drop-shadow-sm whitespace-nowrap">${name}${isCapital ? ' ★' : ''}</div>
+      <div class="w-2.5 h-2.5 ${isCapital ? 'bg-[#102A43] border-[1.5px] border-[#C5A059] scale-125' : 'bg-[#264653]'} border border-white rounded-full shadow-sm"></div>
+      <div class="mt-1 text-[8px] font-bold ${isCapital ? 'text-[#102A43]' : 'text-[#264653]'} uppercase tracking-wider drop-shadow-sm whitespace-nowrap">${name}${isCapital ? ' ★' : ''}</div>
     </div>`, [40, 30]),
   
   // Electricity
@@ -67,6 +91,12 @@ function DashboardKpi({ label, value, sub, status }: { label: string; value: str
   );
 }
 
+const LAYER_TABS = [
+  { key: 'ELECTRICITY', label: 'Power' },
+  { key: 'OIL & GAS', label: 'Oil & Gas' },
+  { key: 'COAL', label: 'Coal & Uranium' },
+];
+
 const RISK_EVENTS = [
   { severity: 'Critical', time: '14:28', title: 'Pipeline Throughput Deviating from LLM Confidence Band', desc: 'ANO-2026-0512 — 92% breach probability within 48H, investigation recommended', location: 'Aktau · GCS-001', route: '/warning/timeseries/ANO-2026-0512' },
   { severity: 'Critical', time: '13:15', title: 'Western Caspian Energy — High-Risk Pattern Match', desc: 'SCADA pattern matches confirmed overproduction cases (similarity 0.87); cross-anomalies in financial & emissions data', location: 'Aktau · ENT-0091', route: '/warning/enterprise/ENT-0091' },
@@ -77,9 +107,24 @@ const RISK_EVENTS = [
   { severity: 'Info', time: '07:00', title: 'Routine Compliance Scan Complete', desc: '1,247 enterprises scanned today; 0 new high-risk items', location: 'Nationwide' },
 ];
 
+// World mask polygon: covers the entire world, with a hole for Kazakhstan
+const WORLD_OUTER: [number, number][] = [
+  [-90, -180],
+  [-90, 180],
+  [90, 180],
+  [90, -180],
+  [-90, -180]
+];
+const maskCoordinates = [WORLD_OUTER, KZ_BORDER_DETAILED];
+
+// No colorful regions anymore; we use a minimalistic approach.
+
 export default function NationalGrid() {
   const [tab, setTab] = useState('ELECTRICITY');
-  const [countdown, setCountdown] = useState(299); // 4:59 as seconds
+  const [countdown, setCountdown] = useState(299);
+  const [isLeftOpen, setIsLeftOpen] = useState(false);
+  const [isRightOpen, setIsRightOpen] = useState(false);
+  const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Simulated countdown
@@ -108,10 +153,10 @@ export default function NationalGrid() {
 
         <div className="h-8 w-px bg-border-default" />
 
-        <DashboardKpi label="Supply Stability Index" value="98.2%" sub="+0.3% YoY" status="good" />
-        <DashboardKpi label="Weekly Anomalies" value="12" sub="3 unresolved" status="warn" />
-        <DashboardKpi label="High-Risk Pending" value="2" sub="Response in 48H" status="critical" />
-        <DashboardKpi label="Compliance Rate" value="94.7%" sub="↑ 2.1% vs last month" status="good" />
+        <DashboardKpi label="Supply Stability" value="98.2%" sub="national index" status="good" />
+        <DashboardKpi label="High-Risk Events" value="2" sub="requires HQ action" status="critical" />
+        <DashboardKpi label="Pending Decisions" value="5" sub="dispatch / review" status="warn" />
+        <DashboardKpi label="Avoided Exposure" value="75 MMcm" sub="30D estimated gas loss" status="critical" />
 
         <div className="flex-1" />
 
@@ -127,12 +172,12 @@ export default function NationalGrid() {
       {/* Closed-Loop Tracker */}
       <div className="h-9 bg-[#F5F7FA] border-b border-border-default flex items-center px-6 gap-1 shrink-0">
         {[
-          { label: 'Detect', count: 12, active: true, color: '#2FBF71' },
-          { label: 'Attribute', count: 8, active: true, color: '#4A90E2' },
-          { label: 'Dispatch', count: 5, active: true, color: '#E7A53A' },
-          { label: 'Resolve', count: 3, active: true, color: '#E7A53A' },
-          { label: 'Review', count: 2, active: false, color: '#98A1AA' },
-          { label: 'Archive', count: 1, active: false, color: '#98A1AA' },
+          { label: 'Detect', count: 12, active: true, color: '#355C7D' }, // 数据监管链路: #355C7D
+          { label: 'Attribute', count: 8, active: true, color: '#355C7D' }, // 数据监管链路: #355C7D
+          { label: 'Dispatch', count: 5, active: true, color: '#355C7D' }, // 数据监管链路: #355C7D
+          { label: 'Resolve', count: 3, active: true, color: '#355C7D' }, // 数据监管链路: #355C7D
+          { label: 'Review', count: 2, active: false, color: '#9A9A9A' }, // 规划/外部连接: #9A9A9A
+          { label: 'Archive', count: 1, active: false, color: '#9A9A9A' }, // 规划/外部连接: #9A9A9A
         ].map((step, i, arr) => (
           <React.Fragment key={step.label}>
             <div className={cn(
@@ -157,11 +202,11 @@ export default function NationalGrid() {
 
       {/* Tab Switcher — Layer Selector */}
       <div className="h-9 border-b border-border-default bg-white flex shrink-0 px-6 gap-1 items-center">
-        {[
-          { key: 'ELECTRICITY', label: 'Power', icon: '⚡' },
-          { key: 'OIL & GAS', label: 'Oil & Gas', icon: '🛢' },
-          { key: 'COAL', label: 'Coal & Uranium', icon: '⛏' },
-        ].map(t => {
+        <div className="flex items-center gap-2 mr-3 text-[10px] font-bold uppercase tracking-wider text-[#66707A]">
+          <Layers size={13} />
+          Energy Layer
+        </div>
+        {LAYER_TABS.map(t => {
           const isActive = tab === t.key;
           return (
             <button
@@ -174,7 +219,6 @@ export default function NationalGrid() {
                   : "text-[#66707A] hover:bg-[#F5F7FA] hover:text-[#1A1E23]"
               )}
             >
-              <span className="mr-1.5">{t.icon}</span>
               {t.label}
             </button>
           );
@@ -183,7 +227,46 @@ export default function NationalGrid() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Stats Column */}
-        <div className="w-[240px] border-r border-border-default bg-white p-5 overflow-y-auto flex flex-col shrink-0 gap-6">
+        <div className={cn(
+          "border-r border-border-default bg-white overflow-y-auto flex flex-col shrink-0 transition-all duration-300",
+          isLeftOpen ? "w-[240px] p-5 gap-6" : "w-[56px] p-2 gap-2"
+        )}>
+          <button
+            type="button"
+            aria-label={isLeftOpen ? "Collapse energy details panel" : "Expand energy details panel"}
+            onClick={() => setIsLeftOpen(open => !open)}
+            className={cn(
+              "min-h-11 rounded-md border border-border-default bg-white text-[#66707A] hover:text-[#1A1E23] hover:bg-[#F5F7FA] transition-colors flex items-center",
+              isLeftOpen ? "justify-between px-3" : "justify-center"
+            )}
+          >
+            {isLeftOpen && <span className="text-[10px] font-bold uppercase tracking-wider">Energy Details</span>}
+            {isLeftOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+          </button>
+
+          {!isLeftOpen && (
+            <div className="flex flex-col gap-2">
+              {LAYER_TABS.map(t => (
+                <button
+                  key={t.key}
+                  type="button"
+                  aria-label={`Show ${t.label} layer`}
+                  onClick={() => setTab(t.key)}
+                  className={cn(
+                    "min-h-11 rounded-md border text-[10px] font-bold leading-tight transition-colors px-1",
+                    tab === t.key
+                      ? "bg-[#1A1E23] border-[#1A1E23] text-white"
+                      : "bg-white border-border-default text-[#66707A] hover:bg-[#F5F7FA] hover:text-[#1A1E23]"
+                  )}
+                >
+                  {t.label.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isLeftOpen && (
+          <>
           {tab === 'ELECTRICITY' && (
             <>
               <KpiCard label="Total Electricity Generation" value="118.92 TWh" subLabel="2023 Gross Generation" />
@@ -283,22 +366,103 @@ export default function NationalGrid() {
               </div>
             </>
           )}
+          </>
+          )}
 
         </div>
 
         {/* Center Map Area */}
-        <div className="flex-1 relative bg-[#FAFAF8] overflow-hidden">
+        <div className="flex-1 relative bg-[#F5F2EA] overflow-hidden">
             <MapContainer
-              center={[48.5, 68.0]}
-              zoom={4.3}
-              className="h-full w-full bg-[#FAFAF8]"
+              center={[48.0, 67.0]}
+              zoom={5}
+              className="h-full w-full"
+              style={{ background: '#F5F2EA' }}
               zoomControl={false}
               attributionControl={false}
-              minZoom={3.8}
+              minZoom={4}
               maxZoom={7}
             >
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" />
+              <SetMapView />
               
+              {/* Tile Layer — CartoDB Light (muted, no labels) */}
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+                errorTileUrl=""
+                className="map-tiles-layer"
+                opacity={0.25} // Muted background maps
+              />
+
+              {/* Base Kazakhstan Mainland filled with Ivory White (#FBFAF5) */}
+              <Polygon
+                positions={KZ_BORDER_DETAILED as any}
+                pathOptions={{
+                  fillColor: '#FBFAF5',
+                  fillOpacity: 1,
+                  color: 'transparent',
+                  weight: 0,
+                  interactive: false,
+                }}
+              />
+
+              {/* 1) Per-region subtle boundaries — minimalistic professional look */}
+              {KZ_REGIONS.map(region => {
+                const isHovered = hoveredRegion === region.name;
+                return region.polygons.map((poly, i) => (
+                  <Polygon
+                    key={`${region.name}-${i}`}
+                    positions={poly as any}
+                    pathOptions={{
+                      fillColor: '#D1D8D1', // 行政边界 浅灰绿
+                      fillOpacity: isHovered ? 0.08 : 0, 
+                      color: '#D1D8D1',
+                      weight: isHovered ? 2.0 : 0.9, // extremely thin default border to not steal the spotlight
+                      opacity: isHovered ? 0.8 : 0.45, // low opacity to stay subtle
+                      className: 'glowing-light-green-border'
+                    }}
+                    eventHandlers={{
+                      mouseover: () => setHoveredRegion(region.name),
+                      mouseout: () => setHoveredRegion(null),
+                    }}
+                  />
+                ));
+              })}
+
+              {/* 2) World Dimming Mask — surrounding region mask (#ECE8DF) */}
+              <Polygon
+                positions={maskCoordinates as any}
+                pathOptions={{
+                  fillColor: '#ECE8DF', // 周边区域
+                  fillOpacity: 1.0,
+                  color: 'transparent',
+                  weight: 0,
+                  interactive: false,
+                }}
+              />
+
+              {/* 3a) National border outer stroke layer (soft anti-aliasing #D8DDD6, opacity 40%, wider weight) */}
+              <Polygon
+                positions={KZ_BORDER_DETAILED as any}
+                pathOptions={{
+                  fill: false,
+                  color: '#D8DDD6',
+                  weight: 3.2,
+                  opacity: 0.4,
+                  interactive: false,
+                }}
+              />
+
+              {/* 3b) National border highlight — grey-green main stroke (#7D8C84, width 1.3px) */}
+              <Polygon
+                positions={KZ_BORDER_DETAILED as any}
+                pathOptions={{
+                  fill: false,
+                  color: '#7D8C84', // 国界 灰绿色
+                  weight: 1.3,
+                  opacity: 1,
+                  className: 'glowing-border'
+                }}
+              />
               {/* Electricity Layer */}
               {tab === 'ELECTRICITY' && (
                 <>
@@ -307,23 +471,26 @@ export default function NationalGrid() {
                       key={line.id} 
                       positions={[line.from as any, line.to as any]} 
                       color={
-                        line.type === '1150kV' ? '#9D4EDD' : 
-                        line.type === '500kV' ? '#E63946' : 
-                        line.type === 'INTER' ? '#666666' :
-                        '#4A90E2'
+                        line.status === 'PLANNED' || line.type === 'INTER' ? '#9A9A9A' : // 外部连接和规划线: #9A9A9A
+                        line.type === '1150kV' ? '#6F4A28' : // 重点线路: #6F4A28
+                        '#9C6B3C' // 主干线路: #9C6B3C 深棕铜色 (500kV, 220kV, etc.)
                       } 
                       weight={
-                        line.type === '1150kV' ? 2.8 : 
-                        line.type === '500kV' ? 2.2 : 
-                        line.type === 'INTER' ? 3.0 : 
-                        1.4
+                        line.type === '1150kV' ? 2.5 : 
+                        line.type === '500kV' ? 1.8 : 
+                        line.type === 'INTER' ? 2.0 : 
+                        1.2
                       } 
                       dashArray={
-                        line.status === 'PLANNED' ? '8, 8' : 
-                        line.type === 'INTER' ? '6, 4' : 
+                        line.status === 'PLANNED' ? '5, 5' : 
+                        line.type === 'INTER' ? '5, 3' : 
                         undefined
                       }
-                      opacity={line.type === 'INTER' ? 0.8 : 0.7} 
+                      opacity={
+                        line.status === 'PLANNED' || line.type === 'INTER' ? 0.75 : 
+                        line.type === '220kV' ? 0.72 : // 普通线路降低透明度至 70%-75%
+                        0.9
+                      } 
                     />
                   ))}
                   {POWER_PLANTS.map(p => (
@@ -358,9 +525,9 @@ export default function NationalGrid() {
                     <Polyline 
                       key={p.id} 
                       positions={[p.from as any, p.to as any]} 
-                      color={p.type === 'OIL' ? '#FF6B35' : '#00A6D6'} 
+                      color={p.type === 'OIL' ? '#6F4A28' : '#9C6B3C'} // OIL: 重点线路 #6F4A28, GAS: 主干线路 #9C6B3C
                       weight={p.width || 2} 
-                      opacity={0.9} 
+                      opacity={0.85} 
                     />
                   ))}
                   {OIL_FIELDS.map(f => (
@@ -459,7 +626,7 @@ export default function NationalGrid() {
                     </Marker>
                   ))}
                   {COAL_RAIL.map(r => (
-                    <Polyline key={r.id} positions={[r.from as any, r.to as any]} color="#888888" weight={1.6} dashArray="4, 4" opacity={0.6} />
+                    <Polyline key={r.id} positions={[r.from as any, r.to as any]} color="#9A9A9A" weight={1.5} dashArray="5, 3" opacity={0.75} /> // 规划/外部连接 中性灰虚线
                   ))}
                 </>
               )}
@@ -504,24 +671,56 @@ export default function NationalGrid() {
           <div className="absolute bottom-4 left-4 z-[1000] bg-white/80 backdrop-blur-md border border-border-default px-3 py-1.5 shadow-xl rounded-sm">
              <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-[#66707A]">
                <div className="w-1.5 h-1.5 rounded-full bg-[#2FBF71] animate-pulse" />
-               SCADA 15-Min Reporting · AI Continuous Inference · Nationwide
+               Telemetry &lt;1s capable · SCADA 15-min current feed · AI continuous inference
              </div>
           </div>
         </div>
 
         {/* Right Risk Panel */}
-        <div className="w-[300px] border-l border-border-default bg-white flex flex-col overflow-hidden shrink-0">
+        <div className={cn(
+          "border-l border-border-default bg-white flex flex-col overflow-hidden shrink-0 transition-all duration-300",
+          isRightOpen ? "w-[320px]" : "w-[64px]"
+        )}>
           <div className="p-4 border-b border-border-default flex items-center justify-between bg-white shrink-0">
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={isRightOpen ? "Collapse risk events panel" : "Expand risk events panel"}
+              onClick={() => setIsRightOpen(open => !open)}
+              className="min-h-11 min-w-11 rounded-md border border-border-default text-[#66707A] hover:text-[#1A1E23] hover:bg-[#F5F7FA] transition-colors flex items-center justify-center"
+            >
+              {isRightOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
+            </button>
+            {isRightOpen && <div className="flex items-center gap-2">
               <Bell size={14} className="text-[#1A1E23]" />
               <span className="text-[11px] font-bold text-[#1A1E23] uppercase tracking-wider">Risk Events</span>
-            </div>
-            <div className="flex items-center gap-3">
+            </div>}
+            {isRightOpen && <div className="flex items-center gap-3">
               <button className="text-[10px] font-bold text-[#E14B4B] border-b border-[#E14B4B]">Critical 2</button>
               <button className="text-[10px] font-bold text-[#98A1AA] hover:text-[#E7A53A]">Warning 5</button>
               <button className="text-[10px] font-bold text-[#98A1AA] hover:text-[#66707A]">Info 5</button>
-            </div>
+            </div>}
           </div>
+          {!isRightOpen && (
+            <div className="flex-1 flex flex-col items-center gap-3 py-4">
+              <div className="w-10 h-10 rounded-md bg-[#FDECEC] text-[#E14B4B] flex flex-col items-center justify-center">
+                <span className="text-[15px] font-bold leading-none">2</span>
+                <span className="text-[7px] font-bold uppercase leading-none">Crit</span>
+              </div>
+              <div className="w-10 h-10 rounded-md bg-[#FCF3E0] text-[#A96705] flex flex-col items-center justify-center">
+                <span className="text-[15px] font-bold leading-none">5</span>
+                <span className="text-[7px] font-bold uppercase leading-none">Warn</span>
+              </div>
+              <div className="h-px w-8 bg-border-default" />
+              <div
+                className="rotate-180 text-[10px] font-bold uppercase tracking-wider text-[#66707A]"
+                style={{ writingMode: 'vertical-rl' }}
+              >
+                Risk Queue
+              </div>
+            </div>
+          )}
+          {isRightOpen && (
+          <>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {RISK_EVENTS.map((ev, idx) => (
               <div
@@ -559,6 +758,8 @@ export default function NationalGrid() {
               <FileCheck size={14} /> View All Events
             </button>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>
@@ -585,16 +786,16 @@ function MapLegend({ tab }: { tab: string }) {
             <div className="space-y-1.5">
               {tab === 'ELECTRICITY' ? (
                 <>
-                  <LegendItem color="#9D4EDD" label="1150 kV Backbone" />
-                  <LegendItem color="#E63946" label="500 kV Grid" />
-                  <LegendItem color="#4A90E2" label="220 kV Grid" />
-                  <LegendItem color="#666666" label="Transit Interconnects" weight={3} />
+                  <LegendItem color="#6F4A28" label="1150 kV Backbone (Key Line)" />
+                  <LegendItem color="#9C6B3C" label="500 kV Grid (Trunk Line)" />
+                  <LegendItem color="#9C6B3C" label="220 kV Grid (Ordinary Line)" opacity={0.72} />
+                  <LegendItem color="#9A9A9A" label="Transit Interconnects (Planned)" dashed />
                 </>
               ) : (
                 <>
-                  <LegendItem color="#FF6B35" label="Oil Trunk" />
-                  <LegendItem color="#00A6D6" label="Gas Trunk" />
-                  <LegendItem color="#888" label="Energy Rail Link" dashed />
+                  <LegendItem color="#6F4A28" label="Oil Trunk (Key Line)" />
+                  <LegendItem color="#9C6B3C" label="Gas Trunk (Trunk Line)" />
+                  <LegendItem color="#9A9A9A" label="Energy Rail Link (External)" dashed />
                 </>
               )}
             </div>

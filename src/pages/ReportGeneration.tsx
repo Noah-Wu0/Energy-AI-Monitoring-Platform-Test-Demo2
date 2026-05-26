@@ -5,203 +5,365 @@ import {
   Printer, 
   RotateCw, 
   ShieldCheck, 
-  Layers, 
-  Eye, 
-  Save,
-  CheckCircle2,
-  ChevronRight,
-  Edit3
+  CheckCircle2, 
+  ChevronRight, 
+  FileCheck,
+  Clock,
+  AlertTriangle,
+  Send,
+  Eye,
+  Lock,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import { SectionTitle, Button, StatusChip } from '../components/UI';
+import { useNavigate } from 'react-router-dom';
 
 export default function ReportGeneration() {
   const [template, setTemplate] = useState('MINISTER BRIEFING');
+  const [isApproved, setIsApproved] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-bg-page">
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#F4F6FA] text-text-primary">
       {/* Top Status Bar */}
-      <div className="h-10 bg-white border-b border-border-default flex items-center justify-between px-6 shrink-0">
+      <div className="h-10 bg-white border-b border-border-default flex items-center justify-between px-6 shrink-0 z-10">
         <div className="flex items-center gap-6">
-          <span className="all-caps-label text-[10px]">Context: Auto Regulatory Report Generation</span>
+          <span className="all-caps-label text-[10px] font-bold text-text-secondary tracking-wider">Context: Minister Briefing Output</span>
           <div className="flex items-center gap-4 border-l border-border-default pl-4">
-             <span className="all-caps-label text-[10px] text-text-primary px-2 bg-bg-secondary rounded-sm">Template: {template}</span>
-             <span className="all-caps-label text-[10px] text-text-tertiary">Draft Version: 2026.05.28-V1</span>
+             <span className="all-caps-label text-[10px] text-white px-2 py-0.5 bg-bg-dark rounded-sm font-bold">Template: {template}</span>
+             <span className="all-caps-label text-[10px] text-text-tertiary">Draft: 2026.05.28-V1</span>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
+          <span className="all-caps-label text-[9px] text-text-tertiary font-bold">Closed-Loop Integrity Verified</span>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Template Selection */}
+        {/* Left Sidebar - Briefing List & Templates (Simplified) */}
         <div className="w-[220px] border-r border-border-default bg-white p-5 flex flex-col shrink-0 overflow-y-auto">
-           <SectionTitle>Report Templates</SectionTitle>
-           <div className="space-y-1 mb-8">
-             {[
-               'MINISTER BRIEFING',
-               'DAILY DIGEST',
-               'WEEKLY REGULATORY',
-               'EMERGENCY ALERT',
-               'ENVIRONMENTAL IMPACT'
-             ].map(t => (
-               <button
-                 key={t}
-                 onClick={() => setTemplate(t)}
-                 className={`w-full text-left px-3 py-2 rounded-sm text-[11px] font-bold transition-all
-                   ${template === t ? 'bg-bg-dark text-white' : 'text-text-secondary hover:bg-bg-hover'}`}
-               >
-                 {template === t ? '●' : '○'} {t}
-               </button>
-             ))}
-           </div>
+          <div className="mb-6">
+            <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-3">Briefing Templates</h4>
+            <div className="space-y-1">
+              {[
+                'MINISTER BRIEFING',
+                'DAILY DIGEST',
+                'WEEKLY REGULATORY',
+                'EMERGENCY ALERT',
+                'ENVIRO IMPACT'
+              ].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTemplate(t)}
+                  className={`w-full text-left px-3 py-2 rounded-sm text-[11px] font-bold transition-all flex items-center justify-between
+                    ${template === t ? 'bg-bg-dark text-white' : 'text-text-secondary hover:bg-bg-hover'}`}
+                >
+                  <span>{t}</span>
+                  {template === t && <div className="w-1 h-1 rounded-full bg-white" />}
+                </button>
+              ))}
+            </div>
+          </div>
 
-           <SectionTitle>Recent Reports</SectionTitle>
-           <div className="space-y-3">
-             {[
-               { id: 'REP-0524', date: '2026-05-24', type: 'Daily' },
-               { id: 'REP-0523', date: '2026-05-23', type: 'Daily' },
-               { id: 'REP-WEEK-20', date: '2026-05-21', type: 'Weekly' }
-             ].map(r => (
-               <div key={r.id} className="p-3 border border-border-default hover:bg-bg-hover cursor-pointer group">
-                  <div className="text-[10px] font-bold text-text-primary mb-1 uppercase tracking-tight">{r.id}</div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[9px] text-text-tertiary">{r.date}</span>
-                    <span className="text-[9px] text-text-secondary font-bold uppercase">{r.type}</span>
+          <div className="border-t border-border-default pt-5">
+            <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-3">Active Case Archives</h4>
+            <div className="space-y-2">
+              {[
+                { id: 'CASE-2026-001', title: 'Western Caspian Gas', date: 'May 28', status: 'CRITICAL' },
+                { id: 'CASE-2026-002', title: 'Pavlodar Coal GRES-1', date: 'May 24', status: 'WARNING' },
+                { id: 'CASE-2026-003', title: 'Karaganda Power Grid', date: 'May 20', status: 'RESOLVED' }
+              ].map(c => (
+                <div 
+                  key={c.id} 
+                  onClick={() => c.id === 'CASE-2026-001' ? null : navigate(`/attribution/workflow`)}
+                  className={`p-3 border border-border-default rounded-sm bg-white cursor-pointer transition-all hover:shadow-sm hover:border-text-tertiary group
+                    ${c.id === 'CASE-2026-001' ? 'border-status-critical/30 bg-status-critical/5' : ''}`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[9px] font-bold font-mono text-text-primary">{c.id}</span>
+                    <span className={`text-[7px] font-bold px-1 rounded-sm uppercase
+                      ${c.status === 'CRITICAL' ? 'bg-status-critical/10 text-status-critical' : c.status === 'WARNING' ? 'bg-status-warning/10 text-status-warning' : 'bg-status-success/10 text-status-success'}`}>
+                      {c.status}
+                    </span>
                   </div>
-               </div>
-             ))}
-           </div>
-        </div>
-
-        {/* Center Report Preview Area */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-bg-secondary p-8">
-           <div className="bg-white flex-1 max-w-[800px] mx-auto w-full shadow-lg border border-border-default flex flex-col overflow-hidden">
-              {/* Document Header Controls */}
-              <div className="h-10 border-b border-border-default flex items-center justify-between px-6 bg-white shrink-0">
-                 <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-text-primary"><Edit3 size={12}/> Edit</button>
-                    <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-text-tertiary"><Eye size={12}/> Preview</button>
-                    <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-text-tertiary"><Printer size={12}/> Print View</button>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-status-success" />
-                    <span className="all-caps-label text-[9px] text-text-tertiary uppercase">Auto-save: On</span>
-                 </div>
-              </div>
-
-              {/* Document Content (Scrollable) */}
-              <div className="flex-1 p-16 overflow-y-auto bg-white font-serif">
-                 <div className="flex flex-col items-center mb-16 gap-2">
-                    <div className="text-[16px] font-bold uppercase tracking-[0.2em] text-text-secondary font-sans">AI Statecraft for Minister</div>
-                    <div className="text-[12px] font-medium uppercase tracking-[0.1em] text-text-tertiary font-sans">Energy Oversight Module</div>
-                    <div className="w-32 h-px bg-border-strong my-4" />
-                    <div className="text-[28px] font-bold text-text-primary tracking-tight font-sans uppercase">Minister Briefing Report</div>
-                    <div className="text-[13px] text-text-secondary font-sans all-caps-label">REPORT PERIOD: APRIL 1, 2026 — APRIL 30, 2026</div>
-                    <div className="text-[11px] text-text-tertiary font-sans mt-1">Generated: 2026-05-28 15:42:00</div>
-                 </div>
-
-                 <div className="space-y-12 max-w-[600px] mx-auto text-[14px] leading-relaxed text-text-primary selection:bg-status-warning/20">
-                    <section>
-                       <h2 className="text-[14px] font-bold uppercase font-sans border-b border-border-default pb-2 mb-4">1. Executive Summary</h2>
-                       <div className="bg-status-warning/5 p-4 border-l-2 border-status-warning relative group cursor-pointer">
-                          <p className="italic">
-                            During Q2 2026, the national energy oversight system detected 42 anomalies across 237 monitored facilities, of which 12 were classified as high-severity. Key focus remains on the Aktau regional cluster where production reporting discrepancies have reached critical thresholds...
-                          </p>
-                          <div className="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <RotateCw size={12} className="text-status-warning" />
-                          </div>
-                          <div className="hidden group-hover:block absolute -right-32 top-0 w-28 bg-bg-dark text-white text-[9px] p-2 rounded-sm shadow-xl z-20 font-sans">
-                             Generated from 14 source data points. Confidence 94%.
-                          </div>
-                       </div>
-                    </section>
-
-                    <section>
-                       <h2 className="text-[14px] font-bold uppercase font-sans border-b border-border-default pb-2 mb-4">2. National Grid Status</h2>
-                       <p className="mb-4">
-                         Primary power generation index remains within nominal boundaries at <span className="font-bold">6.7 GW</span> aggregate capacity. Coal reliance stabilized at 60%, with renewable integration increasing by 2.4% following the completion of the Karaganda-West solar farm expansion.
-                       </p>
-                       <div className="h-40 bg-bg-secondary w-full flex items-center justify-center text-[11px] text-text-tertiary uppercase font-sans font-bold border border-border-default">
-                          [Spatial Data Matrix: National Capacity Heatmap]
-                       </div>
-                    </section>
-
-                    <section>
-                       <h2 className="text-[14px] font-bold uppercase font-sans border-b border-border-default pb-2 mb-4">3. Regulatory Anomaly Detail</h2>
-                       <div className="space-y-4">
-                          <div className="flex gap-4">
-                             <div className="w-1.5 h-1.5 rounded-full bg-status-critical mt-2 shrink-0" />
-                             <div>
-                                <span className="font-bold">ENT-KZ-AKT-0091 (+20% Gap):</span>
-                                <p className="text-text-secondary mt-1">Cross-system audit triggered by Master Agent identified significant discrepancy between reported production and derived energy capacity. Referral to Joint Investigation Taskforce recommended.</p>
-                             </div>
-                          </div>
-                          <div className="flex gap-4">
-                             <div className="w-1.5 h-1.5 rounded-full bg-status-warning mt-2 shrink-0" />
-                             <div>
-                                <span className="font-bold">ANO-2026-0512 (Pressure):</span>
-                                <p className="text-text-secondary mt-1">GCS-001 pipeline segment N04 showing sustained pressure oscillation. Pattern matches historical pump failure signature.</p>
-                             </div>
-                          </div>
-                       </div>
-                    </section>
-                 </div>
-
-                 <div className="mt-24 border-t border-border-default pt-8 text-[11px] text-text-tertiary flex justify-between items-center font-sans uppercase font-bold tracking-widest">
-                    <span>Restricted Content — For Minister Use Only</span>
-                    <span>Page 1 / 18</span>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        {/* Right Data Sources Panel */}
-        <div className="w-[340px] border-l border-border-default bg-white p-6 flex flex-col shrink-0 overflow-y-auto">
-           <SectionTitle>Data Sources Snapshot</SectionTitle>
-           <div className="space-y-3 mb-8">
-              {[
-                { id: 'ANO-2026-0512', type: 'Telemetry Anomaly', date: '14:32 05-18' },
-                { id: 'CASE-2026-001', type: 'Attribution Verdict', date: '16:00 05-18' },
-                { id: 'SYS-GRID-CAP', type: 'Static Capacity Data', date: 'Latest' },
-                { id: 'ENT-DB-AKT', type: 'Master Business Registry', date: 'Latest' }
-              ].map(source => (
-                <div key={source.id} className="border border-border-default p-3 flex flex-col gap-1 hover:border-text-tertiary cursor-pointer transition-colors">
-                   <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-text-primary uppercase tracking-tight">{source.id}</span>
-                      <ShieldCheck size={12} className="text-status-success" />
-                   </div>
-                   <div className="text-[9px] all-caps-label text-text-secondary">{source.type}</div>
-                   <div className="text-[9px] text-text-tertiary font-mono">Snapshot: {source.date}</div>
+                  <div className="text-[10px] font-bold text-text-secondary truncate">{c.title}</div>
+                  <div className="text-[9px] text-text-tertiary mt-1">{c.date} · 6-Agent Verified</div>
                 </div>
               ))}
-           </div>
+            </div>
+          </div>
+        </div>
 
-           <SectionTitle>Approval Workflow</SectionTitle>
-           <div className="space-y-6 relative">
-              <div className="absolute left-[13px] top-6 bottom-6 w-px bg-border-default" />
-              {[
-                { actor: 'AI (Statecraft Core)', action: 'Drafted & Validated', status: 'COMPLETE', time: '15:42' },
-                { actor: 'Senior Analyst (L2)', action: 'Human Review & Edit', status: 'COMPLETE', time: '16:15' },
-                { actor: 'Regulatory Director', action: 'Compliance Approval', status: 'PENDING', time: '--:--' },
-                { actor: 'Office of Minister', action: 'Final Publication', status: 'LOCKED', time: '--:--' }
-              ].map((step, i) => (
-                <div key={i} className="flex gap-4 relative z-10">
-                   <div className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-white shrink-0 shadow-sm
-                     ${step.status === 'COMPLETE' ? 'bg-status-success' : step.status === 'PENDING' ? 'bg-bg-dark border-bg-dark text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
-                      {step.status === 'COMPLETE' ? <CheckCircle2 size={14} /> : i+1}
-                   </div>
-                   <div className="flex flex-col gap-0.5">
-                      <div className="text-[11px] font-bold uppercase text-text-primary leading-tight">{step.actor}</div>
-                      <div className="text-[9px] text-text-secondary uppercase">{step.action}</div>
-                      <div className="text-[9px] font-mono text-text-tertiary mt-1">{step.status} — {step.time}</div>
-                   </div>
+        {/* Center Briefing Preview Area */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-bg-secondary p-6 overflow-y-auto">
+          <div className="bg-white max-w-[840px] mx-auto w-full shadow-lg border border-border-default flex flex-col overflow-hidden shrink-0">
+            {/* Document Header Controls */}
+            <div className="h-10 border-b border-border-default flex items-center justify-between px-6 bg-white shrink-0">
+              <div className="flex items-center gap-4">
+                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-text-primary hover:text-text-secondary transition-colors">
+                  <FileText size={12}/> View Original Data
+                </button>
+                <button 
+                  onClick={() => navigate('/warning/timeseries/ANO-2026-0512')}
+                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-text-tertiary hover:text-text-primary transition-colors border-l border-border-default pl-4"
+                >
+                  <Clock size={12}/> Anomaly Forecast
+                </button>
+                <button 
+                  onClick={() => navigate('/audit/event/CASE-2026-001')}
+                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-text-tertiary hover:text-text-primary transition-colors border-l border-border-default pl-4"
+                >
+                  <FileCheck size={12}/> SLA Audit Trail
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Printer size={12} className="text-text-tertiary hover:text-text-primary cursor-pointer" />
+                <Download size={12} className="text-text-tertiary hover:text-text-primary cursor-pointer ml-2" />
+              </div>
+            </div>
+
+            {/* Document Content */}
+            <div className="flex-1 p-10 md:p-14 bg-white font-serif relative">
+              {/* Official Seal / Header */}
+              <div className="flex flex-col items-center mb-10 gap-2 text-center">
+                <div className="text-[12px] font-bold uppercase tracking-[0.25em] text-text-secondary font-sans">Ministry of Energy of the Republic of Kazakhstan</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-text-tertiary font-sans">State AI Regulatory Oversight Directorate</div>
+                <div className="w-24 h-0.5 bg-text-primary my-3" />
+                <h1 className="text-[26px] font-black text-text-primary tracking-tight font-sans uppercase">Ministerial Briefing & Action Proposal</h1>
+                <div className="text-[10px] text-text-tertiary font-mono uppercase tracking-widest mt-1">
+                  CASE-ID: CASE-2026-001 / REGION: Mangystau / DATE: 2026-05-28
                 </div>
-              ))}
-           </div>
+              </div>
 
-           <div className="mt-auto pt-8 flex flex-col gap-2">
-              <Button variant="secondary" className="w-full" icon={Download}>Export as Secured PDF</Button>
-              <Button variant="secondary" className="w-full" icon={RotateCw}>Regenerate with AI</Button>
-              <Button variant="primary" className="w-full" icon={ChevronRight}>Submit for Approval</Button>
-           </div>
+              {/* Minister Briefing Dashboard Block (The Executive 5-Point Summary First Fold) */}
+              <div className="mb-10 p-6 border-2 border-bg-dark bg-[#FAFAFA] font-sans rounded-sm shadow-sm">
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-border-default">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-bg-dark flex items-center gap-2">
+                    <ShieldCheck size={15} /> Executive Briefing Summary
+                  </div>
+                  <span className="text-[9px] font-mono text-text-tertiary">Confidence Limit: 95% CI (Backtest: 94.2%)</span>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* 1. Risk Finding */}
+                  <div className="grid grid-cols-[160px_1fr] items-start gap-4 text-[12px]">
+                    <span className="font-bold text-text-secondary uppercase tracking-wider text-[10px] mt-0.5">1. Risk Finding</span>
+                    <div>
+                      <div className="font-bold text-[13px] text-status-critical">
+                        92% breach risk within 48H predicted at Aktau GCS-001
+                      </div>
+                      <p className="text-text-secondary text-[11px] mt-0.5 leading-relaxed font-medium">
+                        Continuous SCADA telemetry shows physical generation decoupling. Unabated anomaly will exceed threshold capacity within two days.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 2. Preventive Action */}
+                  <div className="grid grid-cols-[160px_1fr] items-start gap-4 text-[12px] border-t border-border-default/60 pt-3">
+                    <span className="font-bold text-text-secondary uppercase tracking-wider text-[10px] mt-0.5">2. Preventive Action</span>
+                    <div>
+                      <div className="font-bold text-[13px] text-text-primary">
+                        Dispatch preventive on-site inspection within remaining 22H window
+                      </div>
+                      <p className="text-text-secondary text-[11px] mt-0.5 leading-relaxed font-medium">
+                        Initiate mechanical validation and emissions metering checks. Action before the 36H window preserves a gas waste mitigation threshold of <span className="font-bold text-text-primary">75 MMcm</span>.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3. Evidence Basis */}
+                  <div className="grid grid-cols-[160px_1fr] items-start gap-4 text-[12px] border-t border-border-default/60 pt-3">
+                    <span className="font-bold text-text-secondary uppercase tracking-wider text-[10px] mt-0.5">3. Evidence Basis</span>
+                    <div>
+                      <div className="font-bold text-[13px] text-text-primary">
+                        Cross-System Multi-Point Mismatch Confirmed
+                      </div>
+                      <div className="text-text-secondary text-[11px] mt-0.5 leading-relaxed font-medium flex flex-wrap gap-x-2 gap-y-1">
+                        <span className="px-1.5 py-0.5 bg-white border border-border-default font-bold rounded-sm">SCADA (+15.7% Output)</span>
+                        <span className="px-1.5 py-0.5 bg-white border border-border-default font-bold rounded-sm">Fuel Gas (-13.5% Under-reporting)</span>
+                        <span className="px-1.5 py-0.5 bg-white border border-border-default font-bold rounded-sm">License Cap (+18% Exceedance)</span>
+                        <span className="px-1.5 py-0.5 bg-white border border-border-default font-bold rounded-sm">Tariff Invoice (+21.2%)</span>
+                        <span className="px-1.5 py-0.5 bg-white border border-border-default font-bold rounded-sm">CEMS Emission (-20.0%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. SLA Status */}
+                  <div className="grid grid-cols-[160px_1fr] items-start gap-4 text-[12px] border-t border-border-default/60 pt-3">
+                    <span className="font-bold text-text-secondary uppercase tracking-wider text-[10px] mt-0.5">4. SLA Status</span>
+                    <div>
+                      <div className="font-bold text-[13px] text-status-warning">
+                        Dispatch phase is currently the critical path
+                      </div>
+                      <p className="text-text-secondary text-[11px] mt-0.5 leading-relaxed font-medium">
+                        Inspection Dept has completed automated attribution routing (18 min). Task sent to Mangystau Regional Inspectorate. Acknowledgment pending.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 5. Minister Decision */}
+                  <div className="grid grid-cols-[160px_1fr] items-start gap-4 text-[12px] border-t border-border-default/60 pt-3">
+                    <span className="font-bold text-text-secondary uppercase tracking-wider text-[10px] mt-0.5 text-status-critical">5. Decision Needed</span>
+                    <div>
+                      <div className="font-bold text-[13px] text-status-critical flex items-center gap-1.5">
+                        <AlertTriangle size={13} /> Approve formal cross-agency preventive audit
+                      </div>
+                      <p className="text-text-secondary text-[11px] mt-0.5 leading-relaxed font-medium">
+                        Authorizing joint inspection task force (Ministry of Energy, Ecology, and Customs) to inspect Turbine Units 1-4.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Core Narrative / Detailed Case Study Section */}
+              <div className="space-y-8 max-w-[660px] mx-auto text-[13px] leading-relaxed text-text-primary">
+                <section>
+                  <h3 className="text-[12px] font-bold uppercase tracking-wider font-sans border-b border-border-default pb-1 mb-3">I. Background & Telemetry Analysis</h3>
+                  <p className="mb-3">
+                    On May 28, 2026, the state AI oversight platform detected persistent night-time deviations at <span className="font-bold">Aktau GCS-001 (Western Caspian Energy LLC)</span>. The continuous risk scoring algorithm identified an anomalous physical-thermal operating profile.
+                  </p>
+                  <p>
+                    SCADA telemetry indicates generator outputs averaging <span className="font-bold">118 MW</span>, representing a <span className="font-bold">+15.7% deviation</span> from the expected baseline given the company's submitted regulatory schedules. This operating rate represents a direct exceedance of their approved industrial permit capacity limit of <span className="font-bold">100 MW</span> by <span className="font-bold">+18.0%</span>.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="text-[12px] font-bold uppercase tracking-wider font-sans border-b border-border-default pb-1 mb-3">II. Cross-System Consistency Auditing</h3>
+                  <p className="mb-4">
+                    The Bayesian Master Agent cross-referenced five primary source records to reconstruct a verified evidence trail. Mismatch analysis confirms a high-confidence overproduction scenario:
+                  </p>
+
+                  <table className="w-full border border-border-default text-left text-[11px] font-sans mb-4">
+                    <thead>
+                      <tr className="bg-bg-secondary font-bold text-text-secondary border-b border-border-default">
+                        <th className="p-2 border-r border-border-default">Monitored Parameter</th>
+                        <th className="p-2 border-r border-border-default text-center">Nominal Value</th>
+                        <th className="p-2 border-r border-border-default text-center">Reported Value</th>
+                        <th className="p-2 text-center">Deviation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border-default">
+                        <td className="p-2 border-r border-border-default font-bold">SCADA Output (KEGOC)</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">102 MW</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">118 MW</td>
+                        <td className="p-2 text-center font-bold text-status-warning">+15.7%</td>
+                      </tr>
+                      <tr className="border-b border-border-default bg-[#FAFAFA]">
+                        <td className="p-2 border-r border-border-default font-bold">Fuel Gas Consumption (UNG)</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">111 MMcm</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">96 MMcm</td>
+                        <td className="p-2 text-center font-bold text-status-warning">-13.5%</td>
+                      </tr>
+                      <tr className="border-b border-border-default">
+                        <td className="p-2 border-r border-border-default font-bold">Financial Billing Invoice</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">104 BN KZT</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">126 BN KZT</td>
+                        <td className="p-2 text-center font-bold text-status-critical">+21.2%</td>
+                      </tr>
+                      <tr className="bg-[#FAFAFA]">
+                        <td className="p-2 border-r border-border-default font-bold">Emissions Factor (MOE CEMS)</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">115 Tons</td>
+                        <td className="p-2 border-r border-border-default text-center font-mono">92 Tons</td>
+                        <td className="p-2 text-center font-bold text-status-critical">-20.0%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  
+                  <p>
+                    The physical heat-rate triangle is mathematically irreconcilable. The low fuel consumption (-13.5%) and suppressed emissions reporting (-20.0%) directly contradict the high electrical outputs logged by the grid operator. This signature matches historical capacity concealment cases (morphology similarity <span className="font-bold">0.87</span>).
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="text-[12px] font-bold uppercase tracking-wider font-sans border-b border-border-default pb-1 mb-3">III. Risk Exposure & Preventive Value</h3>
+                  <p className="mb-3">
+                    If this pattern is permitted to continue without regulatory response, the AI forecasting engine estimates a <span className="font-bold text-status-critical">68% probability of safety-critical failure or emission breach within 90 days</span> due to sustained thermal strain on turbine components.
+                  </p>
+                  <p>
+                    By initiating immediate preventive field verification, the Ministry mitigates an estimated cumulative exposure equivalent to <span className="font-bold text-text-primary">75 MMcm in unmetered gas volume</span> and preserves full regulatory integrity.
+                  </p>
+                </section>
+              </div>
+
+              {/* Document Signatures */}
+              <div className="mt-16 border-t border-border-default pt-6 text-[10px] text-text-tertiary flex justify-between items-center font-sans font-bold tracking-wider uppercase">
+                <span>CONFIDENTIAL Briefing — FOR MINISTERIAL USE ONLY</span>
+                <span>Page 1 / 2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar - Status & CTA Panel */}
+        <div className="w-[340px] border-l border-border-default bg-white p-6 flex flex-col shrink-0 overflow-y-auto z-10">
+          <SectionTitle>Briefing Metadata</SectionTitle>
+          <div className="space-y-3 mb-6">
+            {[
+              { label: 'Oversight Case', value: 'CASE-2026-001', detail: 'Critical Severity' },
+              { label: 'Attributed Subject', value: 'Western Caspian Energy LLC', detail: 'ENT-KZ-AKT-0091' },
+              { label: 'Asset Inspected', value: 'Aktau GCS-001 / Turbine Units 1-4', detail: 'Mangystau Province' },
+              { label: 'Preventive SLA Window', value: '36 Hours Total', detail: '22 Hours Remaining' }
+            ].map((meta, i) => (
+              <div key={i} className="border border-border-default p-3 bg-[#FAFBFD] rounded-sm">
+                <div className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{meta.label}</div>
+                <div className="text-[11px] font-bold text-text-primary mt-1 uppercase">{meta.value}</div>
+                <div className="text-[9px] text-text-secondary mt-0.5 font-mono">{meta.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionTitle>Ministerial Approval Loop</SectionTitle>
+          <div className="space-y-4 relative mb-8">
+            <div className="absolute left-[13px] top-6 bottom-6 w-px bg-border-default" />
+            {[
+              { actor: 'AI (Oversight Engine)', action: 'Telemetry anomaly matched & compiled', status: 'COMPLETE', time: '14:32' },
+              { actor: 'Attribution Master Agent', action: '6-agent cross-system verification', status: 'COMPLETE', time: '14:50' },
+              { actor: 'Inspection Directorate', action: 'Dispatched to Mangystau region', status: 'COMPLETE', time: '15:20' },
+              { actor: 'Vice-Minister Approval', action: 'Approve Briefing & Joint Audit', status: isApproved ? 'COMPLETE' : 'PENDING', time: isApproved ? 'Just Now' : '--:--' }
+            ].map((step, i) => (
+              <div key={i} className="flex gap-4 relative z-10">
+                <div className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-white shrink-0 shadow-sm text-[10px] font-bold
+                  ${step.status === 'COMPLETE' ? 'bg-status-success' : 'bg-bg-dark border-bg-dark text-white animate-pulse'}`}>
+                  {step.status === 'COMPLETE' ? <CheckCircle2 size={13} /> : i + 1}
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="text-[11px] font-black uppercase text-text-primary leading-tight">{step.actor}</div>
+                  <div className="text-[11px] text-text-secondary font-medium">{step.action}</div>
+                  <div className="text-[9.5px] font-mono font-bold text-text-tertiary mt-0.5 uppercase tracking-wider">{step.status} — {step.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-auto pt-4 border-t border-border-default space-y-2">
+            {!isApproved ? (
+              <button
+                onClick={() => setIsApproved(true)}
+                className="w-full min-h-[44px] bg-status-critical text-white text-[11px] font-bold uppercase tracking-wider hover:bg-red-700 transition-all rounded-sm shadow-md flex items-center justify-center gap-2"
+              >
+                <Send size={14} /> Approve & Publish Briefing
+              </button>
+            ) : (
+              <div className="p-4 bg-status-success/10 border border-status-success/30 rounded-sm text-center text-status-success">
+                <div className="text-[12px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 mb-1">
+                  <CheckCircle2 size={16} /> Briefing Approved
+                </div>
+                <div className="text-[10px] text-text-secondary leading-snug font-medium">
+                  Sent to the Office of the Minister. Joint inspection dispatched.
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => navigate('/audit/event/CASE-2026-001')}
+              className="w-full min-h-[40px] bg-white border border-border-default text-text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-bg-hover transition-all rounded-sm flex items-center justify-center gap-2"
+            >
+              <RotateCw size={12} /> View Active Audit Timeline
+            </button>
+          </div>
         </div>
       </div>
     </div>

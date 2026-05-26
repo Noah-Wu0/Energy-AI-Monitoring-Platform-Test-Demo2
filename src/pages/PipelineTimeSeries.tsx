@@ -12,7 +12,6 @@ import {
   CheckCircle2, 
   History,
   TrendingUp,
-  Activity,
   Info,
   ChevronRight
 } from 'lucide-react';
@@ -273,25 +272,37 @@ export default function PipelineTimeSeries() {
         </div>
       </div>
 
-      {/* KPI Strip — Prediction-Focused */}
-      <div className="grid grid-cols-4 gap-px bg-border-default border-b border-border-default shrink-0">
+      {/* AI Decision Strip — Prediction-Focused */}
+      <div className="h-[132px] bg-white border-b border-border-default shrink-0 grid grid-cols-[1.35fr_repeat(4,1fr)] gap-px">
+        <div className="bg-[#1A1E23] text-white p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/60 mb-2">
+            <BrainCircuit size={15} />
+            AI Regulatory Decision
+          </div>
+          <div className="text-[22px] font-bold leading-tight">
+            92% breach risk within {metadata.kpis.predicted_next_breach_h}H
+          </div>
+          <div className="mt-2 text-[12px] text-white/70 leading-relaxed max-w-[520px]">
+            Start preventive inspection within {metadata.kpis.action_window_h}H to avoid escalation at {metadata.facility_name}.
+          </div>
+        </div>
         <KpiCard
-          label="Predicted Breach Window"
-          value={`${metadata.kpis.predicted_next_breach_h} H`}
-          subLabel={`Investigation must start within ${metadata.kpis.action_window_h}H`}
+          label="Action Deadline"
+          value={`${metadata.kpis.action_window_h} H`}
+          subLabel="recommended intervention window"
         />
         <KpiCard
-          label="Max Deviation"
-          value={<span className="text-status-critical">+{metadata.kpis.max_deviation_pct}%</span>}
-          subLabel={metadata.kpis.max_deviation_ci}
+          label="Avoided Exposure"
+          value={`${metadata.kpis.predicted_cumulative_loss_mmcm} MMcm`}
+          subLabel="30D estimated gas-loss threshold"
         />
         <KpiCard
-          label="Pattern Match Score"
+          label="Pattern Match"
           value={metadata.kpis.morphology_similarity_score.toFixed(2)}
           subLabel={metadata.kpis.morphology_ci}
         />
         <KpiCard
-          label="AI Confidence"
+          label="Confidence"
           value={metadata.kpis.ai_confidence.toFixed(2)}
           subLabel={metadata.kpis.ai_confidence_ci}
         />
@@ -350,7 +361,7 @@ export default function PipelineTimeSeries() {
           {/* Middle Cluster: Mini Map & Algo Switcher */}
           <div className="h-1/3 flex border-b border-border-default shrink-0">
             {/* Mini Map */}
-            <div className="flex-1 border-r border-border-default relative bg-bg-secondary/20">
+            <div className="hidden border-r border-border-default relative bg-bg-secondary/20">
                <MapContainer center={[43.65, 51.16]} zoom={9} className="h-full w-full grayscale-[0.5] contrast-[0.8]" zoomControl={false} dragging={false} scrollWheelZoom={false}>
                   <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                   <Polyline 
@@ -366,7 +377,7 @@ export default function PipelineTimeSeries() {
                   />
                   <CircleMarker center={[43.65, 51.16]} radius={6} color="#E14B4B" fillColor="#E14B4B" fillOpacity={0.8} />
                </MapContainer>
-               <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1 items-start">
+               <div className="absolute bottom-2 left-2 z-[1000] flex flex-col gap-1 items-start">
                   <span className="all-caps-label text-[9px] bg-white border border-border-default px-1.5 py-0.5">Spatial Localization: High</span>
                   <div className="bg-white/90 border border-border-default p-2 text-[9px] flex flex-col gap-1">
                     <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-status-critical" /> Anomaly Hub</div>
@@ -376,43 +387,36 @@ export default function PipelineTimeSeries() {
                </div>
             </div>
 
-            {/* Algorithm Switcher */}
-            <div className="w-[400px] flex flex-col bg-white p-6 justify-center">
-              <SectionTitle className="mb-4">Algorithm Selection</SectionTitle>
-              <div className="flex gap-px bg-border-default border border-border-default mb-4">
+            {/* AI Regulatory Impact */}
+            <div className="w-full flex flex-col bg-white p-4 justify-between">
+              <SectionTitle>AI Regulatory Impact</SectionTitle>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  ['Risk scoring', 'Continuous'],
+                  ['Action window', `${metadata.kpis.action_window_h}H`],
+                  ['Owner suggested', 'Inspection'],
+                  ['Evidence mode', 'Cross-system'],
+                ].map(([label, value]) => (
+                  <div key={label} className="border border-border-default bg-bg-secondary/20 p-2 rounded-sm min-h-[48px]">
+                    <div className="text-[8px] text-text-tertiary uppercase font-bold tracking-wider">{label}</div>
+                    <div className="text-[11px] font-bold text-text-primary mt-0.5">{value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-px bg-border-default border border-border-default">
                 {algoComparison.algorithms.map((a: any) => (
                   <button
                     key={a.id}
                     onClick={() => setSelectedAlgo(a.id)}
                     className={cn(
-                      "flex-1 py-2 text-[12px] font-bold uppercase transition-all flex flex-col items-center gap-0.5 px-2 text-center",
+                      "flex-1 min-h-9 text-[10px] font-bold uppercase transition-all flex flex-col items-center justify-center gap-0.5 px-2 text-center",
                       selectedAlgo === a.id ? "bg-bg-dark text-white" : "bg-white text-text-tertiary hover:bg-bg-hover"
                     )}
                   >
                     <span className="leading-tight">{a.name}</span>
-                    {a.id === 'LLM_TS' && <span className="text-[8px] opacity-70">★ RECOMMENDED</span>}
+                    {a.id === 'LLM_TS' && <span className="text-[7px] opacity-70">RECOMMENDED</span>}
                   </button>
                 ))}
-              </div>
-              <div className="flex-1 bg-bg-secondary/30 border border-border-default p-4 overflow-y-auto">
-                <div className="flex items-start gap-3">
-                  {selectedAlgo === 'LLM_TS' ? <BrainCircuit size={16} className="text-status-info shrink-0 mt-0.5" /> : <Activity size={16} className="text-text-tertiary shrink-0 mt-0.5" />}
-                  <div>
-                    <h4 className="text-[11px] font-bold text-text-primary uppercase mb-1">
-                      {algoComparison.algorithms.find((a: any) => a.id === selectedAlgo)?.name}
-                    </h4>
-                    <p className="text-[10px] leading-relaxed text-text-secondary">
-                      {algoComparison.algorithms.find((a: any) => a.id === selectedAlgo)?.verdict.reason}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-[9px] font-bold">
-                      {selectedAlgo === 'LLM_TS' ? (
-                        <span className="text-status-success">✓ CAPTURED PERSISTENT PATTERN</span>
-                      ) : (
-                        <span className="text-status-critical">⚠ {selectedAlgo === 'THRESHOLD' ? 'BLIND TO MORPHOLOGY' : 'BLIND TO DRIFT'}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -432,7 +436,7 @@ export default function PipelineTimeSeries() {
                <div className="w-px h-6 bg-border-default" />
                <div className="flex flex-col gap-0.5">
                   <span className="text-[8px] text-text-tertiary uppercase font-bold">Resolution</span>
-                  <span className="text-[10px] font-bold">15 MIN</span>
+                  <span className="text-[10px] font-bold">15-min feed</span>
                </div>
                <div className="w-px h-6 bg-border-default" />
                <div className="flex flex-col gap-0.5">

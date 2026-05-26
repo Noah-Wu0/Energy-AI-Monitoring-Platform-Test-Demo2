@@ -32,7 +32,7 @@ const MENU_ACTS = [
     subtitle: 'AI Prediction · Pre-emptive Warning',
     color: '#E14B4B',
     items: [
-      { id: 'timeseries', label: 'Pipeline Time-Series Forecast', path: '/warning/timeseries/ANO-2026-0512', icon: AlertTriangle, count: 2 },
+      { id: 'timeseries', label: 'AI Risk & Action Forecast', path: '/warning/timeseries/ANO-2026-0512', icon: AlertTriangle, count: 2 },
       { id: 'enterprise', label: 'Enterprise Cross-Reference', path: '/warning/enterprise', icon: Search, count: 5 },
     ]
   },
@@ -43,7 +43,7 @@ const MENU_ACTS = [
     color: '#4A90E2',
     items: [
       { id: 'workflow', label: 'Agent Attribution Workflow', path: '/attribution/workflow', icon: GitBranch, count: 8 },
-      { id: 'audit', label: 'Lifecycle Audit Matrix', path: '/audit/event/CASE-2026-001', icon: FileCheck, count: 42 },
+      { id: 'audit', label: 'Preventive SLA Audit', path: '/audit/event/CASE-2026-001', icon: FileCheck, count: 42 },
     ]
   },
   {
